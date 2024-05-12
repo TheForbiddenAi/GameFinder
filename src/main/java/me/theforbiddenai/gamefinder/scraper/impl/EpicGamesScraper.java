@@ -39,7 +39,7 @@ public class EpicGamesScraper extends Scraper {
             // Loop through jNode elements,
             jNode.forEach(gameJson ->
                     // Convert each element to a game object using jsonToGame, and then add the nonnull objects to games list
-                    Optional.ofNullable(jsonToGame(gameJson)).map(games::add)
+                    jsonToGame(gameJson).ifPresent(games::add)
             );
 
             return games;
@@ -52,17 +52,16 @@ public class EpicGamesScraper extends Scraper {
      * Converts a JsonNode object to a game object
      *
      * @param gameJson The JsonNode object containing data about a game listing
-     * @return A game object, or null if:
+     * @return An optional containing the game object, or an empty optional if:
      *         the found listing is not a game and includeDLCs is disabled in {@link GameFinderConfiguration}
      *         or there is no discount applied
      */
-    private Game jsonToGame(JsonNode gameJson) {
+    private Optional<Game> jsonToGame(JsonNode gameJson) {
         String offerType = gameJson.get("offerType").asText();
+        boolean isDLC = !offerType.equalsIgnoreCase("BASE_GAME");
 
         // Filter out all non games if includeDLCs is disabled
-        if (!CONFIG.includeDLCs()) {
-            if (!offerType.equalsIgnoreCase("BASE_GAME")) return null;
-        }
+        if (!CONFIG.includeDLCs() && isDLC) return Optional.empty();
 
         JsonNode price = gameJson.get("price")
                 .get("totalPrice");
@@ -71,28 +70,29 @@ public class EpicGamesScraper extends Scraper {
 
         // Filter out all listings with a discount of 0
         // This includes the "Mystery Game" postings EpicGames shows before the game is announced
-        if (discount == 0) return null;
+        if (discount == 0) return Optional.empty();
 
         Game.GameBuilder gameBuilder = Game.builder()
                 .title(gameJson.get("title").asText())
                 .description(gameJson.get("description").asText())
                 .url(getGameUrl(gameJson))
+                .isDLC(isDLC)
                 .platform(Platform.EPIC_GAMES)
                 .expirationEpoch(getOfferExpirationEpoch(gameJson));
 
         // Add image data
-        setGameImages(gameJson, gameBuilder);
+        setGameMedia(gameJson, gameBuilder);
 
-        return gameBuilder.build();
+        return Optional.ofNullable(gameBuilder.build());
     }
 
     /**
-     * Retrieves store images and game media and adds it to the game builder
+     * Retrieves store media and game media and adds it to the game builder
      *
      * @param gameJson    The JsonNode object containing data about a game listing
      * @param gameBuilder The GameBuilder being updated
      */
-    private void setGameImages(JsonNode gameJson, Game.GameBuilder gameBuilder) {
+    private void setGameMedia(JsonNode gameJson, Game.GameBuilder gameBuilder) {
         JsonNode keyImages = gameJson.get("keyImages");
         if (keyImages == null) return;
 
@@ -115,7 +115,7 @@ public class EpicGamesScraper extends Scraper {
         }
 
         // Add data to game builder
-        gameBuilder.storeImages(storeImages);
+        gameBuilder.storeMedia(storeImages);
         gameBuilder.media(media);
     }
 
@@ -163,7 +163,8 @@ public class EpicGamesScraper extends Scraper {
                 .map(node -> node.elements().next())
                 .map(node -> node.get("promotionalOffers"))
                 .map(node -> node.elements().next())
-                .map(node -> node.get("endDate").asText()).orElse("");
+                .map(node -> node.get("endDate").asText())
+                .orElse("");
 
         // Return -1 if not found or end date epoch
         return endDate.isBlank() ? -1 : Instant.parse(endDate).getEpochSecond();

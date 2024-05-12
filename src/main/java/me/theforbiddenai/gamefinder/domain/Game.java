@@ -15,13 +15,14 @@ public class Game {
     private String title;
     private String description;
     private String url;
+    private boolean isDLC;
 
     @Builder.Default
     private Platform platform = Platform.UNDEFINED;
 
     // storeImages are comprised of thumbnails, header images, and capsule images
     @Builder.Default
-    private Map<String, String> storeImages = new HashMap<>();
+    private Map<String, String> storeMedia = new HashMap<>();
 
     // media includes screenshots and trailers
     @Builder.Default

@@ -18,7 +18,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,7 +49,8 @@ public class EpicGamesScraperTest {
                 .description("Cool game.")
                 .url("https://store.epicgames.com/en-US/p/pageSlug")
                 .platform(Platform.EPIC_GAMES)
-                .storeImages(Map.of("DieselStoreFrontTall", "url-1", "DieselStoreFrontWide", "url-2"))
+                .isDLC(false)
+                .storeMedia(Map.of("DieselStoreFrontTall", "url-1", "DieselStoreFrontWide", "url-2"))
                 .media(List.of("url-3", "url-4"))
                 .expirationEpoch(1715871600L)
                 .build();
@@ -58,8 +59,9 @@ public class EpicGamesScraperTest {
                 .title("DLC")
                 .description("Cool DLC.")
                 .url("https://store.epicgames.com/en-US/p/offerSlug")
+                .isDLC(true)
                 .platform(Platform.EPIC_GAMES)
-                .storeImages(Map.of("OfferImageWide", "url-1", "OfferImageTall", "url-2"))
+                .storeMedia(Map.of("OfferImageWide", "url-1", "OfferImageTall", "url-2"))
                 .media(List.of("url-3"))
                 .expirationEpoch(1715871600L)
                 .build();
@@ -73,12 +75,7 @@ public class EpicGamesScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
         List<Game> returnedGames = scraper.retrieveGames();
-
-        assertEquals(expectedGamesWithDLCs.size(), returnedGames.size());
-
-        for (int i = 0; i < expectedGamesWithDLCs.size(); i++) {
-            assertEquals(expectedGamesWithDLCs.get(i), returnedGames.get(i));
-        }
+        assertIterableEquals(expectedGamesWithDLCs, returnedGames);
     }
 
     @Test
@@ -86,12 +83,7 @@ public class EpicGamesScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
         List<Game> returnedGames = scraper.retrieveGames();
-
-        assertEquals(expectedGamesWithoutDLCs.size(), returnedGames.size());
-
-        for (int i = 0; i < expectedGamesWithoutDLCs.size(); i++) {
-            assertEquals(expectedGamesWithoutDLCs.get(i), returnedGames.get(i));
-        }
+        assertIterableEquals(expectedGamesWithoutDLCs, returnedGames);
     }
 
 }
