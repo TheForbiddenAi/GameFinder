@@ -3,6 +3,7 @@ package me.theforbiddenai.gamefinder.scraper.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
+import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
@@ -154,7 +155,7 @@ public class EpicGamesScraper extends Scraper {
      * Gets the expiration epoch for a game listing from its json data
      *
      * @param gameJson The json data for the game listing
-     * @return The epoch second when the offer expires or -1 if it can't be found
+     * @return The epoch second when the offer expires or {@link GameFinderConstants#NO_EXPIRATION_EPOCH} if it can't be found
      */
     private long getOfferExpirationEpoch(JsonNode gameJson) {
         // Retrieve endDate string (empty if not found)
@@ -166,8 +167,8 @@ public class EpicGamesScraper extends Scraper {
                 .map(node -> node.get("endDate").asText())
                 .orElse("");
 
-        // Return -1 if not found or end date epoch
-        return endDate.isBlank() ? -1 : Instant.parse(endDate).getEpochSecond();
+        // Return GameFinderConstants.NO_EXPIRATION_EPOCH if not found or end date epoch
+        return endDate.isBlank() ? GameFinderConstants.NO_EXPIRATION_EPOCH : Instant.parse(endDate).getEpochSecond();
     }
 
     /**

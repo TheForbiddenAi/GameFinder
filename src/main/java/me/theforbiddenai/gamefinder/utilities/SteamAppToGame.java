@@ -1,7 +1,9 @@
 package me.theforbiddenai.gamefinder.utilities;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.NonNull;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
+import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 
@@ -11,12 +13,13 @@ import java.util.*;
 public class SteamAppToGame {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
-    private static final String STEAM_STORE_URL = "https://store.steampowered.com/";
 
     private final SteamRequests steamRequests;
+    private final SteamPackageToGame steamPackageToGame;
 
-    public SteamAppToGame(SteamRequests steamRequests) {
+    public SteamAppToGame(@NonNull SteamRequests steamRequests) {
         this.steamRequests = steamRequests;
+        this.steamPackageToGame = new SteamPackageToGame(steamRequests);
     }
 
     /**
@@ -26,7 +29,7 @@ public class SteamAppToGame {
      * @return An optional containing the game
      * @throws IOException If there is a json parsing error or malformed URL
      */
-    public Optional<Game> convertAppToGame(String appId) throws IOException {
+    public Optional<Game> convertAppToGame(@NonNull String appId) throws IOException {
         Optional<JsonNode> appNodeOptional = steamRequests.getAppDetails(appId);
         // App with given id was not found
         if (appNodeOptional.isEmpty()) return Optional.empty();
@@ -37,19 +40,75 @@ public class SteamAppToGame {
         //Return null if the listing is a DLC and includeDLCs is disabled
         if (!CONFIG.includeDLCs() && isDLC) return Optional.empty();
 
-        String url = STEAM_STORE_URL + "app/" + appId;
+        String url = GameFinderConstants.STEAM_STORE_URL + "app/" + appId;
 
         // TODO: Expiration Epoch
-        Game game = Game.builder()
+        Game.GameBuilder gameBuilder = Game.builder()
                 .title(appNode.get("name").asText())
                 .description(appNode.get("short_description").asText())
                 .url(url)
                 .isDLC(isDLC)
                 .platform(Platform.STEAM)
                 .storeMedia(getAppStoreMedia(appNode))
-                .media(getAppScreenshots(appNode))
-                .build();
-        return Optional.of(game);
+                .media(getAppScreenshots(appNode));
+
+        setExpirationEpoch(appNode, appId, gameBuilder);
+
+        return Optional.of(gameBuilder.build());
+    }
+
+    /**
+     * Sets the expiration epoch for a game builder. Will also update {@link Game#isExpirationEpochEstimate} to true
+     * if a clan's event's end epoch is used
+     *
+     * @param appNode The appId for the listing
+     * @param gameBuilder The builder for the game
+     */
+    private void setExpirationEpoch(@NonNull JsonNode appNode, String appId, Game.GameBuilder gameBuilder) throws IOException {
+        String packageId = getPackageIdWithDiscount(appNode);
+        // If no packageId can be found, the discount expiration time cannot be recovered
+        // I do not believe this is possible to happen unless there is no 100% off discount
+        if (packageId == null || packageId.isBlank()) {
+            gameBuilder.expirationEpoch(GameFinderConstants.NO_EXPIRATION_EPOCH);
+            return;
+        }
+
+        long expirationEpoch = steamPackageToGame.getExpirationEpoch(packageId, appId);
+        gameBuilder.expirationEpoch(expirationEpoch);
+    }
+
+    /**
+     * Gets the package id that corresponds with the 100% discount
+     *
+     * @param appNode The jsonNode for the app
+     * @return The found packageId or null if not found
+     */
+    private String getPackageIdWithDiscount(@NonNull JsonNode appNode) {
+        // Make sure appNode has package_groups before continuing (it should always have this)
+        JsonNode packageGroupsNode = appNode.get("package_groups");
+        if (packageGroupsNode == null) return null;
+
+        for (JsonNode groupNode : packageGroupsNode) {
+            // Continue to next element if there is no subs node
+            JsonNode subsNode = groupNode.get("subs");
+            if (subsNode == null) continue;
+
+            // Loop through sub nodes (these house the buying options for a game; i.e. starter edition, premium, etc.)
+            for (JsonNode subNode : subsNode) {
+                // Get price in cents; if not found return -1
+                int priceInCentsWithDiscount = Optional.of(subNode.get("price_in_cents_with_discount"))
+                        .map(JsonNode::asInt)
+                        .orElse(-1);
+
+                if (priceInCentsWithDiscount == 0) {
+                    // Package with 100% off discount has been found; return packageid
+                    return subNode.get("packageid").asText();
+                }
+
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -58,7 +117,7 @@ public class SteamAppToGame {
      * @param appNode The jsonNode for the app
      * @return A map containing the header, capsule, and capsulev5 images and all movies
      */
-    private Map<String, String> getAppStoreMedia(JsonNode appNode) {
+    private Map<String, String> getAppStoreMedia(@NonNull JsonNode appNode) {
         Map<String, String> storeMedia = new HashMap<>();
 
         // Add header, capsule, and capsulev5 images to map. (capsulev5 is just smaller I believe)
@@ -98,7 +157,7 @@ public class SteamAppToGame {
      * @param appNode The jsonNode for the app
      * @return A list containing all found screenshots
      */
-    private List<String> getAppScreenshots(JsonNode appNode) {
+    private List<String> getAppScreenshots(@NonNull JsonNode appNode) {
         List<String> screenshots = new ArrayList<>();
 
         JsonNode screenshotsNode = appNode.get("screenshots");

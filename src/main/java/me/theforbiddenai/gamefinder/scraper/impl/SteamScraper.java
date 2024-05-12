@@ -60,6 +60,7 @@ public class SteamScraper extends Scraper {
         String logoUrl = gameNode.get("logo").asText();
         if (logoUrl == null) return Optional.empty();
 
+        // Bulk request for subs/bundles
         if (logoUrl.contains("app")) {
             // Extract app id from logo url
             int appsIndex = logoUrl.indexOf("apps/");

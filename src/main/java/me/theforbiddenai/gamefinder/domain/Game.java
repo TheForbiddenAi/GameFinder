@@ -2,6 +2,7 @@ package me.theforbiddenai.gamefinder.domain;
 
 import lombok.Builder;
 import lombok.Data;
+import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +29,11 @@ public class Game {
     @Builder.Default
     private List<String> media = new ArrayList<>();
 
-    // This is -1 if it can't be found
     @Builder.Default
-    private Long expirationEpoch = -1L;
+    private Long expirationEpoch = GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+    // This is true only when a steam clan event's end epoch is used as the end epoch for a game
+    @Builder.Default
+    private boolean isExpirationEpochEstimate = false;
 
 }
