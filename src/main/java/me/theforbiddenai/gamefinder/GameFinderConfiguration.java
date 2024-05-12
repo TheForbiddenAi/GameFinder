@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import me.theforbiddenai.gamefinder.domain.Platform;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -16,7 +17,7 @@ public class GameFinderConfiguration {
 
     private static GameFinderConfiguration INSTANCE;
 
-    private List<Platform> enabledPlatforms;
+    private List<Platform> enabledPlatforms = new ArrayList<>();
 
     // Whether to emit free game DLCs
     @Accessors(fluent = true)

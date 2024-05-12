@@ -1,12 +1,33 @@
 package me.theforbiddenai.gamefinder.scraper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AccessLevel;
+import lombok.Getter;
 import me.theforbiddenai.gamefinder.domain.Game;
+import me.theforbiddenai.gamefinder.domain.Platform;
 
 import java.io.IOException;
 import java.util.List;
 
-public interface Scraper {
+public abstract class Scraper {
 
-    List<Game> retrieveGames() throws IOException;
+    @Getter(AccessLevel.PROTECTED)
+    private final ObjectMapper objectMapper;
+
+    @Getter
+    private final Platform platform;
+
+    public Scraper(ObjectMapper objectMapper, Platform platform) {
+        this.objectMapper = objectMapper;
+        this.platform = platform;
+    }
+
+    /**
+     * Retrieves 100% off games/DLCs (depending on configuration) from a platform
+     *
+     * @return A list of 100% off games/DLCs
+     * @throws IOException If the mapper is unable to parse the JSON data
+     */
+    public abstract List<Game> retrieveGames() throws IOException;
 
 }

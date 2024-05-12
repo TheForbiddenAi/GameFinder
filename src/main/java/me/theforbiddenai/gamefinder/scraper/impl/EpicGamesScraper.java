@@ -12,7 +12,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 
-public class EpicGamesScraper implements Scraper {
+public class EpicGamesScraper extends Scraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
@@ -21,17 +21,24 @@ public class EpicGamesScraper implements Scraper {
     private static final String EPIC_STORE_URL = "https://store.epicgames.com/";
     private static final String EPIC_URL_PREFIX = EPIC_STORE_URL + "en-US/p/";
 
+    public EpicGamesScraper(ObjectMapper objectMapper) {
+        super(objectMapper, Platform.EPIC_GAMES);
+    }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Game> retrieveGames() throws IOException {
         JsonNode jNode = retrieveJson();
 
         List<Game> games = new ArrayList<>();
 
-        // Loop through jNode elements, convert them to game objects using jsonToGame, and then add the nonnull objects to games list
-        jNode.forEach(gameJson -> Optional.ofNullable(jsonToGame(gameJson)).map(games::add));
-
-        games.forEach(System.out::println);
+        // Loop through jNode elements,
+        jNode.forEach(gameJson ->
+                // Convert each element to a game object using jsonToGame, and then add the nonnull objects to games list
+                Optional.ofNullable(jsonToGame(gameJson)).map(games::add)
+        );
 
         return games;
     }
@@ -61,7 +68,7 @@ public class EpicGamesScraper implements Scraper {
         // This includes the "Mystery Game" postings EpicGames shows before the game is announced
         if (discount == 0) return null;
 
-        Game.GameBuilder gameBuilder =  Game.builder()
+        Game.GameBuilder gameBuilder = Game.builder()
                 .title(gameJson.get("title").asText())
                 .description(gameJson.get("description").asText())
                 .url(getGameUrl(gameJson))
@@ -74,6 +81,12 @@ public class EpicGamesScraper implements Scraper {
         return gameBuilder.build();
     }
 
+    /**
+     * Retrieves store images and game media and adds it to the game builder
+     *
+     * @param gameJson    The JsonNode object containing data about a game listing
+     * @param gameBuilder The GameBuilder being updated
+     */
     private void setGameImages(JsonNode gameJson, Game.GameBuilder gameBuilder) {
         JsonNode keyImages = gameJson.get("keyImages");
         if (keyImages == null) return;
@@ -139,10 +152,9 @@ public class EpicGamesScraper implements Scraper {
      * @return The epoch second when the offer expires or -1 if it can't be found
      */
     private long getOfferExpirationEpoch(JsonNode gameJson) {
-        JsonNode promotions = gameJson.get("promotions");
-
         // Retrieve endDate string (empty if not found)
-        String endDate = Optional.ofNullable(promotions.get("promotionalOffers"))
+        String endDate = Optional.ofNullable(gameJson.get("promotions"))
+                .map(node -> node.get("promotionalOffers"))
                 .map(node -> node.elements().next())
                 .map(node -> node.get("promotionalOffers"))
                 .map(node -> node.elements().next())
@@ -159,8 +171,7 @@ public class EpicGamesScraper implements Scraper {
      * @throws IOException If objectMapper fails to read the data;
      */
     private JsonNode retrieveJson() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jNode = mapper.readTree(new URL(JSON_URL));
+        JsonNode jNode = super.getObjectMapper().readTree(new URL(JSON_URL));
         return jNode.get("data")
                 .get("Catalog")
                 .get("searchStore")
