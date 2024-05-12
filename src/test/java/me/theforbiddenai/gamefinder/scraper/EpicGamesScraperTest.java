@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ public class EpicGamesScraperTest {
         ObjectMapper mockObjectMapper = mock(ObjectMapper.class);
         when(mockObjectMapper.readTree(Mockito.any(URL.class))).thenReturn(treeNode);
 
-        this.scraper = new EpicGamesScraper(mock(ObjectMapper.class));
+        this.scraper = new EpicGamesScraper(mockObjectMapper);
 
         Game gameOne = Game.builder()
                 .title("Game")
@@ -68,7 +69,7 @@ public class EpicGamesScraperTest {
     }
 
     @Test
-    public void testJsonToGame() throws IOException {
+    public void testJsonToGame() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
         List<Game> returnedGames = scraper.retrieveGames();
@@ -81,7 +82,7 @@ public class EpicGamesScraperTest {
     }
 
     @Test
-    public void testJsonToGameWithoutDLCs() throws IOException {
+    public void testJsonToGameWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
         List<Game> returnedGames = scraper.retrieveGames();

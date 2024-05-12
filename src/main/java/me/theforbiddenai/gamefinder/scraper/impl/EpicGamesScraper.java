@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.Scraper;
 
 import java.io.IOException;
@@ -29,18 +30,22 @@ public class EpicGamesScraper extends Scraper {
      * {@inheritDoc}
      */
     @Override
-    public List<Game> retrieveGames() throws IOException {
-        JsonNode jNode = retrieveJson();
+    public List<Game> retrieveGames() throws GameRetrievalException {
+        try {
+            JsonNode jNode = retrieveJson();
 
-        List<Game> games = new ArrayList<>();
+            List<Game> games = new ArrayList<>();
 
-        // Loop through jNode elements,
-        jNode.forEach(gameJson ->
-                // Convert each element to a game object using jsonToGame, and then add the nonnull objects to games list
-                Optional.ofNullable(jsonToGame(gameJson)).map(games::add)
-        );
+            // Loop through jNode elements,
+            jNode.forEach(gameJson ->
+                    // Convert each element to a game object using jsonToGame, and then add the nonnull objects to games list
+                    Optional.ofNullable(jsonToGame(gameJson)).map(games::add)
+            );
 
-        return games;
+            return games;
+        } catch (IOException ex) {
+            throw new GameRetrievalException("Unable to retrieve games from EpicGames", ex);
+        }
     }
 
     /**

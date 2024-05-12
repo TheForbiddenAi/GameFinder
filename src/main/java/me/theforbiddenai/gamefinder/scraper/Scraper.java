@@ -5,8 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 
-import java.io.IOException;
 import java.util.List;
 
 public abstract class Scraper {
@@ -26,8 +26,8 @@ public abstract class Scraper {
      * Retrieves 100% off games/DLCs (depending on configuration) from a platform
      *
      * @return A list of 100% off games/DLCs
-     * @throws IOException If the mapper is unable to parse the JSON data
+     * @throws GameRetrievalException If the mapper is unable to parse the JSON data
      */
-    public abstract List<Game> retrieveGames() throws IOException;
+    public abstract List<Game> retrieveGames() throws GameRetrievalException;
 
 }

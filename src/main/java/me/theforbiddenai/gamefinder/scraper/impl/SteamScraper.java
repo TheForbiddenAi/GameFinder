@@ -3,9 +3,9 @@ package me.theforbiddenai.gamefinder.scraper.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.Scraper;
 
-import java.io.IOException;
 import java.util.List;
 
 public class SteamScraper extends Scraper {
@@ -15,7 +15,7 @@ public class SteamScraper extends Scraper {
     }
 
     @Override
-    public List<Game> retrieveGames() throws IOException {
+    public List<Game> retrieveGames() throws GameRetrievalException {
         return List.of();
     }
 
