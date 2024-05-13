@@ -19,10 +19,10 @@ public class SteamScraper extends Scraper {
     private final SteamRequests steamRequests;
     private final SteamAppToGame steamAppToGame;
 
-    public SteamScraper(ObjectMapper objectMapper) {
+    public SteamScraper(ObjectMapper objectMapper, SteamRequests steamRequests) {
         super(objectMapper, Platform.STEAM);
 
-        this.steamRequests = new SteamRequests(objectMapper);
+        this.steamRequests = steamRequests;
         this.steamAppToGame = new SteamAppToGame(steamRequests);
     }
 

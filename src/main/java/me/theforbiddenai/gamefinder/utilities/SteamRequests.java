@@ -9,15 +9,22 @@ import lombok.experimental.Accessors;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class SteamRequests {
 
     @Getter(value = AccessLevel.PROTECTED)
     private final ObjectMapper mapper;
 
+    @Getter()
+    private final List<CompletableFuture<Void>> webscrapeFutures;
+
     public SteamRequests(ObjectMapper mapper) {
         this.mapper = mapper;
+        this.webscrapeFutures = new ArrayList<>();
     }
 
     /**

@@ -2,6 +2,7 @@ package me.theforbiddenai.gamefinder.utilities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.NonNull;
+import me.theforbiddenai.gamefinder.GameFinder;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
@@ -43,38 +44,46 @@ public class SteamAppToGame {
         String url = GameFinderConstants.STEAM_STORE_URL + "app/" + appId;
 
         // TODO: Expiration Epoch
-        Game.GameBuilder gameBuilder = Game.builder()
+        Game game = Game.builder()
                 .title(appNode.get("name").asText())
                 .description(appNode.get("short_description").asText())
                 .url(url)
                 .isDLC(isDLC)
                 .platform(Platform.STEAM)
                 .storeMedia(getAppStoreMedia(appNode))
-                .media(getAppScreenshots(appNode));
+                .media(getAppScreenshots(appNode))
+                .build();
 
-        setExpirationEpoch(appNode, appId, gameBuilder);
+        setExpirationEpoch(appNode, appId, url, game);
 
-        return Optional.of(gameBuilder.build());
+        return Optional.of(game);
     }
 
     /**
-     * Sets the expiration epoch for a game builder. Will also update {@link Game#isExpirationEpochEstimate} to true
-     * if a clan's event's end epoch is used
+     * Sets the expiration epoch for a game.
      *
      * @param appNode The appId for the listing
-     * @param gameBuilder The builder for the game
+     * @param game The game object
      */
-    private void setExpirationEpoch(@NonNull JsonNode appNode, String appId, Game.GameBuilder gameBuilder) throws IOException {
+    private void setExpirationEpoch(@NonNull JsonNode appNode, String appId, String url, Game game) throws IOException {
         String packageId = getPackageIdWithDiscount(appNode);
         // If no packageId can be found, the discount expiration time cannot be recovered
         // I do not believe this is possible to happen unless there is no 100% off discount
         if (packageId == null || packageId.isBlank()) {
-            gameBuilder.expirationEpoch(GameFinderConstants.NO_EXPIRATION_EPOCH);
+            game.setExpirationEpoch(GameFinderConstants.NO_EXPIRATION_EPOCH);
             return;
         }
 
         long expirationEpoch = steamPackageToGame.getExpirationEpoch(packageId, appId);
-        gameBuilder.expirationEpoch(expirationEpoch);
+        // Set expiration epoch in gamebuilder if it's not GameFinderConstants.NO_EXPIRATION_EPOCH or
+        // if it is but GameFinderConfiguration.webscrapeExpirationEpoch is false
+        if(expirationEpoch > GameFinderConstants.NO_EXPIRATION_EPOCH || !CONFIG.webscrapeExpirationEpoch()) {
+            game.setExpirationEpoch(expirationEpoch);
+            return;
+        }
+
+        SteamWebScrape webscrape = new SteamWebScrape();
+        steamRequests.getWebscrapeFutures().add(webscrape.webscrapeExpirationEpoch(url, game));
     }
 
     /**

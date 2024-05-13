@@ -23,9 +23,9 @@ public class GameFinderConfiguration {
     @Accessors(fluent = true)
     private boolean includeDLCs = true;
 
-    // When true, this will use a clan event end time to estimate a discount's end time on steam if it is unable to be retrieved any other way
+    // When true, this will webscrape discount's end time on steam if it is unable to be retrieved any other way
     @Accessors(fluent = true)
-    private boolean useSteamClanEventEndTimes = true;
+    private boolean webscrapeExpirationEpoch = true;
 
     public static GameFinderConfiguration getInstance() {
         if (INSTANCE == null) INSTANCE = new GameFinderConfiguration();

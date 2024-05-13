@@ -6,21 +6,25 @@ import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.Scraper;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
 import me.theforbiddenai.gamefinder.scraper.impl.SteamScraper;
+import me.theforbiddenai.gamefinder.utilities.SteamRequests;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class GameFinder {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
     private final List<Scraper> scrapers;
+    private final SteamRequests steamRequests;
 
     public GameFinder() {
         this.scrapers = new ArrayList<>();
+        this.steamRequests = new SteamRequests(MAPPER);
 
-        scrapers.add(new SteamScraper(MAPPER));
-        scrapers.add(new EpicGamesScraper(MAPPER));
+        this.scrapers.add(new SteamScraper(MAPPER, this.steamRequests));
+        this.scrapers.add(new EpicGamesScraper(MAPPER));
     }
 
     public List<Game> retrieveGames() throws GameRetrievalException {
@@ -31,6 +35,17 @@ public class GameFinder {
             if (CONFIG.getEnabledPlatforms().contains(scraper.getPlatform())) {
                 games.addAll(scraper.retrieveGames());
             }
+        }
+
+        List<CompletableFuture<Void>> webscrapeFutures = steamRequests.getWebscrapeFutures();
+        CompletableFuture<Void> futures = CompletableFuture.allOf(webscrapeFutures.toArray(new CompletableFuture[0]));
+        // Clear webscrape futures as they are now in futures
+        webscrapeFutures.clear();
+
+        try {
+            futures.join();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return games;

@@ -32,8 +32,4 @@ public class Game {
     @Builder.Default
     private Long expirationEpoch = GameFinderConstants.NO_EXPIRATION_EPOCH;
 
-    // This is true only when a steam clan event's end epoch is used as the end epoch for a game
-    @Builder.Default
-    private boolean isExpirationEpochEstimate = false;
-
 }
