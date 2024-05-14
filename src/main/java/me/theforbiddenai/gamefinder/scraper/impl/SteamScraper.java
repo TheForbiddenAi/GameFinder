@@ -286,6 +286,7 @@ public class SteamScraper extends Scraper {
             return ("{\"bundleId\":" + bundleId + "}");
         }
 
+        // Unknown type, so return null
         return null;
     }
 
