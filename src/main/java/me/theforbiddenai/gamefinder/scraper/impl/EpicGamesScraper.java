@@ -6,6 +6,7 @@ import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.Scraper;
 
@@ -31,19 +32,20 @@ public class EpicGamesScraper extends Scraper {
      * {@inheritDoc}
      */
     @Override
-    public List<Game> retrieveGames() throws GameRetrievalException {
+    public List<ScraperResult> retrieveGames() throws GameRetrievalException {
         try {
             JsonNode jNode = retrieveJson();
 
-            List<Game> games = new ArrayList<>();
+            List<ScraperResult> scraperResults = new ArrayList<>();
 
             // Loop through jNode elements,
             jNode.forEach(gameJson ->
-                    // Convert each element to a game object using jsonToGame, and then add the nonnull objects to games list
-                    jsonToGame(gameJson).ifPresent(games::add)
+                    // Convert each element to a game object using jsonToGame,
+                    // then wrap the nonnull objects in a ScraperResult class and add them to scraperResults list
+                    jsonToGame(gameJson).ifPresent(game -> scraperResults.add(new ScraperResult(game)))
             );
 
-            return games;
+            return scraperResults;
         } catch (IOException ex) {
             throw new GameRetrievalException("Unable to retrieve games from EpicGames", ex);
         }

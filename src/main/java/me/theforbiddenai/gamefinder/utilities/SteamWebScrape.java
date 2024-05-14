@@ -2,10 +2,6 @@ package me.theforbiddenai.gamefinder.utilities;
 
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,36 +12,40 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 public class SteamWebScrape {
 
-    private static final OkHttpClient okHttp = new OkHttpClient();
-
-    public CompletableFuture<Void> webscrapeExpirationEpoch(String url, Game game) {
-        return CompletableFuture.runAsync(() -> {
-
-            Request request = new Request.Builder()
-                    .addHeader("Cookie", "birthtime=568022401")
-                    .url(url).get().build();
-
-            try (Response execute = okHttp.newCall(request).execute()) {
-                ResponseBody responseBody = execute.body();
-                if (responseBody == null) return;
-
-                Document document = Jsoup.parse(responseBody.string());
-
-                game.setExpirationEpoch(getExpirationEpoch(document));
+    /**
+     * Web scrapes an expiration date from steam asynchronously
+     *
+     * @param game The game object
+     * @return A CompletableFuture
+     */
+    public CompletableFuture<Game> webScrapeExpirationEpoch(Game game) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Connect to game page
+                return Jsoup.connect(game.getUrl())
+                        .maxBodySize(0)
+                        // Set birthtime cookie to bypass age gate
+                        .cookie("birthtime", "568022401")
+                        .get();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new CompletionException("Unable to web scrape expiration time for ", e);
             }
-
-        });
+        }).thenApply(document -> {
+            // Parse the document for the expiration epoch and set it in the game object
+            game.setExpirationEpoch(getExpirationEpoch(document));
+            return game;
+        }).orTimeout(5, TimeUnit.SECONDS);
     }
 
     /**
      * Extracts expiration date from jsoup document and converts it to epoch second
+     *
      * @param document The jsoup document
      * @return The expiration epoch second or GameFinderConstants.NO_EXPIRATION_EPOCH
      */

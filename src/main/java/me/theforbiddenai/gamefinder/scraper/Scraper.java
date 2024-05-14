@@ -3,8 +3,8 @@ package me.theforbiddenai.gamefinder.scraper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.Getter;
-import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 
 import java.util.List;
@@ -28,6 +28,6 @@ public abstract class Scraper {
      * @return A list of 100% off games/DLCs
      * @throws GameRetrievalException If the mapper is unable to parse the JSON data
      */
-    public abstract List<Game> retrieveGames() throws GameRetrievalException;
+    public abstract List<ScraperResult> retrieveGames() throws GameRetrievalException;
 
 }
