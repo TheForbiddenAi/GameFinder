@@ -50,28 +50,42 @@ public class SteamWebScrape {
      * @return The expiration epoch second or GameFinderConstants.NO_EXPIRATION_EPOCH
      */
     private long getExpirationEpoch(Document document) {
+        // Select purchase area
         Elements elements = document.select("div.game_area_purchase_game");
 
+        // Optionally find purchase section containing a div that has discount_pct class and has the text -100%
         Optional<Element> purchaseSection = elements.stream()
                 .filter(ele -> ele.selectFirst("div.discount_pct:contains(-100%)") != null)
                 .findFirst();
 
+        // If there is no purchase section with the above criteria, return GameFinderConstants.NO_EXPIRATION_EPOCH
         if (purchaseSection.isEmpty()) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
+        // Get the paragraph element containing when the discount ends
         Element paragraph = purchaseSection.get().selectFirst("p.game_purchase_discount_quantity");
+        // If it doesn't exist, return GameFinderConstants.NO_EXPIRATION_EPOCH
         if (paragraph == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+        // Utilize regular expressions to pull the date out
+        // This only accounts for dates like May 18th @ 1:00 PM
         Matcher matcher = GameFinderConstants.STEAM_MONTH_DAY_TIME_REGEX.matcher(paragraph.text());
 
+        // TODO: Account for dates with no time and default to end of day 11:59 PM for time
+        // TODO: Account for listings with countdowns i.e. 44:32:01 (unsure if these will ever need to actually be web scraped)
+
+        // If no match is found, return GameFinderConstants.NO_EXPIRATION_EPOCH
         if (!matcher.find()) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+        // Pull out regex match and make am/pm uppercase so date parser will parse it
         String expirationDate = matcher.group(0)
                 .replace("am", "AM")
                 .replace("pm", "PM");
 
-        // Parse expirationDate using GameFinderConstants.STEAM_DATE_FORMAT
-        // By default Steam will give a date in PST, so it is converted to the
-        // timezone of the system then converted to an Instant and the epochSecond is extracted
+        // Parse expirationDate using GameFinderConstants.STEAM_DATE_FORMAT to get epochSecond
         return LocalDateTime.parse(expirationDate, GameFinderConstants.STEAM_DATE_FORMAT)
+                // By default, Steam will give a date in PST
                 .atZone(ZoneId.of("America/Los_Angeles"))
+                // Convert timezone to the system default
                 .withZoneSameInstant(ZoneId.systemDefault())
                 .toInstant()
                 .getEpochSecond();
