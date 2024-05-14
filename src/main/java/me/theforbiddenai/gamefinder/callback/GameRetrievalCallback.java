@@ -2,8 +2,10 @@ package me.theforbiddenai.gamefinder.callback;
 
 import me.theforbiddenai.gamefinder.domain.Game;
 
+import java.util.List;
+
 public interface GameRetrievalCallback {
 
-    void retrieveGame(Game game);
+    void retrieveGame(List<Game> games);
 
 }

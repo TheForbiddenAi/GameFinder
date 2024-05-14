@@ -75,7 +75,7 @@ public class EpicGamesScraperTest {
     public void testJsonToGame() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
-        List<ScraperResult> returnedGames = scraper.retrieveGames();
+        List<ScraperResult> returnedGames = scraper.retrieveResults();
         assertIterableEquals(expectedGamesWithDLCs, returnedGames);
     }
 
@@ -83,7 +83,7 @@ public class EpicGamesScraperTest {
     public void testJsonToGameWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
-        List<ScraperResult> returnedGames = scraper.retrieveGames();
+        List<ScraperResult> returnedGames = scraper.retrieveResults();
         assertIterableEquals(expectedGamesWithoutDLCs, returnedGames);
     }
 

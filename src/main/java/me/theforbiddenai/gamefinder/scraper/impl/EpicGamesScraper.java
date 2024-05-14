@@ -32,7 +32,7 @@ public class EpicGamesScraper extends Scraper {
      * {@inheritDoc}
      */
     @Override
-    public List<ScraperResult> retrieveGames() throws GameRetrievalException {
+    public List<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
             JsonNode jNode = retrieveJson();
 

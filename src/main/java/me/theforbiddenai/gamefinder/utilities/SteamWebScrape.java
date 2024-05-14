@@ -18,6 +18,8 @@ import java.util.regex.Matcher;
 
 public class SteamWebScrape {
 
+    // TODO: Caching system?
+
     /**
      * Web scrapes an expiration date from steam asynchronously
      *

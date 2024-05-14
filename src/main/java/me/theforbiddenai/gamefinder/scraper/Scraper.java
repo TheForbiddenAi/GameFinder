@@ -28,6 +28,6 @@ public abstract class Scraper {
      * @return A list of 100% off games/DLCs
      * @throws GameRetrievalException If the mapper is unable to parse the JSON data
      */
-    public abstract List<ScraperResult> retrieveGames() throws GameRetrievalException;
+    public abstract List<ScraperResult> retrieveResults() throws GameRetrievalException;
 
 }

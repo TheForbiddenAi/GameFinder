@@ -32,7 +32,7 @@ public class SteamScraper extends Scraper {
      * {@inheritDoc}
      */
     @Override
-    public List<ScraperResult> retrieveGames() throws GameRetrievalException {
+    public List<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
             Optional<JsonNode> gameListOptional = steamRequests.getFreeGames();
             if (gameListOptional.isEmpty())
