@@ -25,7 +25,7 @@ public class Game {
     @Builder.Default
     private Map<String, String> storeMedia = new HashMap<>();
 
-    // media includes screenshots and trailers
+    // media includes screenshots
     @Builder.Default
     private List<String> media = new ArrayList<>();
 
