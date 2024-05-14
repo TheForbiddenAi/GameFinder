@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,8 +29,8 @@ public class EpicGamesScraperTest {
     private EpicGamesScraper scraper;
     private JsonNode treeNode;
 
-    private List<Game> expectedGamesWithDLCs;
-    private List<Game> expectedGamesWithoutDLCs;
+    private List<ScraperResult> expectedGamesWithDLCs;
+    private List<ScraperResult> expectedGamesWithoutDLCs;
 
     @BeforeAll
     public void setupJson() throws IOException {
@@ -66,15 +67,15 @@ public class EpicGamesScraperTest {
                 .expirationEpoch(1715871600L)
                 .build();
 
-        expectedGamesWithDLCs = List.of(gameOne, gameTwo);
-        expectedGamesWithoutDLCs = List.of(gameOne);
+        expectedGamesWithDLCs = List.of(new ScraperResult(gameOne), new ScraperResult(gameTwo));
+        expectedGamesWithoutDLCs = List.of(new ScraperResult(gameOne));
     }
 
     @Test
     public void testJsonToGame() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
-        List<Game> returnedGames = scraper.retrieveGames();
+        List<ScraperResult> returnedGames = scraper.retrieveGames();
         assertIterableEquals(expectedGamesWithDLCs, returnedGames);
     }
 
@@ -82,7 +83,7 @@ public class EpicGamesScraperTest {
     public void testJsonToGameWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
-        List<Game> returnedGames = scraper.retrieveGames();
+        List<ScraperResult> returnedGames = scraper.retrieveGames();
         assertIterableEquals(expectedGamesWithoutDLCs, returnedGames);
     }
 
