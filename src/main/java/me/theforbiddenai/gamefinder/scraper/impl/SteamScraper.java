@@ -21,11 +21,13 @@ public class SteamScraper extends Scraper {
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
     private final SteamRequests steamRequests;
+    private final SteamWebScrape steamWebScrape;
 
     public SteamScraper(ObjectMapper objectMapper, SteamRequests steamRequests) {
         super(objectMapper, Platform.STEAM);
 
         this.steamRequests = steamRequests;
+        this.steamWebScrape = new SteamWebScrape();
     }
 
     /**
@@ -81,6 +83,14 @@ public class SteamScraper extends Scraper {
 
         if (!isFree) return null;
 
+        // A game is a dlc if it's itemNode has a related_items object containing a parent_appid field
+        boolean isDLC = Optional.ofNullable(itemNode.get("related_items"))
+                .map(node -> node.get("parent_appid") != null)
+                .orElse(false);
+
+        // Make sure that includeDLCs is enabled if game is a DLC
+        if(isDLC && !CONFIG.includeDLCs()) return null;
+
         // Form steam store url for the listing
         String gameUrl = GameFinderConstants.STEAM_STORE_URL + itemNode.get("store_url_path").asText("");
 
@@ -89,11 +99,6 @@ public class SteamScraper extends Scraper {
                 .map(node -> node.get("short_description"))
                 .map(JsonNode::asText)
                 .orElse("N/A");
-
-        // A game is a dlc if it's itemNode has a related_items object containing a parent_appid field
-        boolean isDLC = Optional.ofNullable(itemNode.get("related_items"))
-                .map(node -> node.get("parent_appid") != null)
-                .orElse(false);
 
         // Build game from information available in itemNode
         Game game = Game.builder()
@@ -118,11 +123,7 @@ public class SteamScraper extends Scraper {
      * @return A ScraperResult containing the game or future game
      */
     private ScraperResult getResultWithExpirationEpoch(JsonNode itemNode, Game game) {
-        long expirationEpoch = Optional.ofNullable(itemNode.get("best_purchase_option"))
-                .map(node -> node.get("active_discounts"))
-                .map(node -> node.get("discount_end_date"))
-                .map(node -> node.asLong(GameFinderConstants.NO_EXPIRATION_EPOCH))
-                .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+        long expirationEpoch = extractDiscountEndDate(itemNode);
 
         // If the expiration epoch is found, or if it isn't and web scraping is enabled set the epoch
         // and return a ScraperResult with a game object
@@ -133,8 +134,54 @@ public class SteamScraper extends Scraper {
 
         // Use web scraping to find the expiration epoch
         // and return a ScrapperResult with a CompletableFuture<Game> object
-        SteamWebScrape webScraper = new SteamWebScrape();
-        return new ScraperResult(webScraper.webScrapeExpirationEpoch(game));
+        return new ScraperResult(steamWebScrape.webScrapeExpirationEpoch(game));
+    }
+
+    /**
+     * Pulls the expirationEpoch for the discount that is 100% off, if it exists, from a itemNode
+     *
+     * @param itemNode The JsonNode containing the information about the listing
+     * @return The found expirationEpoch or GameFinderConstants.NO_EXPIRATION_EPOCH
+     */
+    private long extractDiscountEndDate(JsonNode itemNode) {
+        JsonNode bestPurchaseOption = itemNode.get("best_purchase_option");
+
+        // Pull out active_discounts node
+        JsonNode activeDiscounts = Optional.ofNullable(bestPurchaseOption)
+                .map(node -> node.get("active_discounts"))
+                .orElse(null);
+
+        if(activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+        // Get the original price in cents. If it doesn't exist or is blank, return GameFinderConstants.NO_EXPIRATION_EPOCH
+        long originalPriceInCents = Optional.ofNullable(bestPurchaseOption.get("original_price_in_cents"))
+                .map(JsonNode::asLong)
+                .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+
+        // Validate there is a price
+        if(originalPriceInCents == GameFinderConstants.NO_EXPIRATION_EPOCH) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+        // Loop through active discounts (unsure if it's possible for there to be more than one)
+        for (JsonNode activeDiscount : activeDiscounts) {
+            // Get discount amount
+            long discountAmount = Optional.ofNullable(activeDiscount.get("discount_amount"))
+                    .map(JsonNode::asLong)
+                    .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+
+            // Ensure that this is the correct discount by verifying that it is 100% off
+            // by comparing the discountAmount to the originalPriceInCents
+            if(discountAmount == originalPriceInCents) {
+                // Get the expirationEpoch if it exists, otherwise return GameFinderConstants.NO_EXPIRATION_EPOCH;
+                long expirationEpoch = Optional.ofNullable(activeDiscount.get("discount_end_date"))
+                        .map(JsonNode::asLong)
+                        .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+                // Return the found expirationEpoch only if it is not GameFinderConstants.NO_EXPIRATION_EPOCH
+                if(expirationEpoch != GameFinderConstants.NO_EXPIRATION_EPOCH) return expirationEpoch;
+            }
+        }
+
+        // No epoch found
+        return GameFinderConstants.NO_EXPIRATION_EPOCH;
     }
 
     /**
@@ -147,6 +194,7 @@ public class SteamScraper extends Scraper {
         JsonNode assetsNode = itemNode.get("assets");
         if (assetsNode == null) return Map.of();
 
+        // Get asset_url_format or return a blank string
         String assetUrlFormat = Optional.ofNullable(assetsNode.get("asset_url_format"))
                 .map(JsonNode::asText)
                 .orElse("");
@@ -158,6 +206,7 @@ public class SteamScraper extends Scraper {
 
         Map<String, String> storeMedia = new HashMap<>();
 
+        // Loop through the fields in the assetsNode
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = assetsNode.fields();
         while (fieldIterator.hasNext()) {
             Map.Entry<String, JsonNode> field = fieldIterator.next();

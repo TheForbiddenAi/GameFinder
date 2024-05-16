@@ -9,6 +9,8 @@ import me.theforbiddenai.gamefinder.domain.Platform;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 
 @Getter
 @Setter
@@ -29,6 +31,9 @@ public class GameFinderConfiguration {
 
     @Accessors(fluent = true)
     private boolean allowSteamMatureContentScreenshots = true;
+
+    // Controls what executorService is used to execute the CompletableFutures
+    private ExecutorService executorService = ForkJoinPool.commonPool();
 
     public static GameFinderConfiguration getInstance() {
         if (INSTANCE == null) INSTANCE = new GameFinderConfiguration();

@@ -35,7 +35,7 @@ public class EpicGamesScraperTest {
     @BeforeAll
     public void setupJson() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        this.treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic-games-scraper-test-data.json"));
+        this.treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic_games_data/epic-games-scraper-test-data.json"));
     }
 
     @BeforeEach
@@ -72,7 +72,7 @@ public class EpicGamesScraperTest {
     }
 
     @Test
-    public void testJsonToGame() throws GameRetrievalException {
+    public void testRetrieveGames() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
         List<ScraperResult> returnedGames = scraper.retrieveResults();
@@ -80,7 +80,7 @@ public class EpicGamesScraperTest {
     }
 
     @Test
-    public void testJsonToGameWithoutDLCs() throws GameRetrievalException {
+    public void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
         List<ScraperResult> returnedGames = scraper.retrieveResults();

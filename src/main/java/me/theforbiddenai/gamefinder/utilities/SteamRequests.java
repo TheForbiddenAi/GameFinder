@@ -18,6 +18,8 @@ public class SteamRequests {
         this.mapper = mapper;
     }
 
+    // TODO: Add ratelimiter to prevent
+
     /**
      * Gets a json list of games and DLCs ids with a 100% off discount
      *

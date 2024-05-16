@@ -97,7 +97,7 @@ public class GameFinder {
                     if (!futureGames.isEmpty()) resolveFutureGames(readyGames, futureGames, callback);
                 });
             });
-        });
+        }, CONFIG.getExecutorService());
     }
 
     /**
@@ -161,7 +161,7 @@ public class GameFinder {
             } catch (GameRetrievalException e) {
                 throw new CompletionException(e);
             }
-        });
+        }, CONFIG.getExecutorService());
     }
 
 }

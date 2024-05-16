@@ -1,5 +1,6 @@
 package me.theforbiddenai.gamefinder.utilities;
 
+import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
 import org.jsoup.Jsoup;
@@ -17,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 public class SteamWebScrape {
+
+    private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
     // TODO: Caching system?
 
@@ -38,7 +41,7 @@ public class SteamWebScrape {
             } catch (IOException e) {
                 throw new CompletionException("Unable to web scrape expiration time for ", e);
             }
-        }).thenApply(document -> {
+        }, CONFIG.getExecutorService()).thenApply(document -> {
             // Parse the document for the expiration epoch and set it in the game object
             game.setExpirationEpoch(getExpirationEpoch(document));
             return game;
@@ -52,8 +55,8 @@ public class SteamWebScrape {
      * @return The expiration epoch second or GameFinderConstants.NO_EXPIRATION_EPOCH
      */
     private long getExpirationEpoch(Document document) {
-        // Select purchase area
-        Elements elements = document.select("div.game_area_purchase_game");
+        // Select purchase area wrappers
+        Elements elements = document.select("div.game_area_purchase_game_wrapper");
 
         // Optionally find purchase section containing a div that has discount_pct class and has the text -100%
         Optional<Element> purchaseSection = elements.stream()

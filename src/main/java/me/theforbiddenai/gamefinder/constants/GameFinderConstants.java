@@ -12,7 +12,7 @@ public class GameFinderConstants {
     public static final String STEAM_STORE_URL = "https://store.steampowered.com/";
     public static final String STEAM_CDN_URL = "https://cdn.cloudflare.steamstatic.com/";
 
-    public static final Pattern STEAM_MONTH_DAY_TIME_REGEX = Pattern.compile("([a-zA-z]{3} \\d{1,2}) (@ \\d{1,2}:\\d{1,2}(pm)?(am)?)");
+    public static final Pattern STEAM_MONTH_DAY_TIME_REGEX = Pattern.compile("([A-z]{3} \\d{1,2}) (@ \\d{1,2}:\\d{2}(am|pm)?)");
 
     public static final DateTimeFormatter STEAM_DATE_FORMAT = new DateTimeFormatterBuilder()
             .appendPattern("MMM dd @ h:mma")
