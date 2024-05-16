@@ -9,6 +9,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 
+/**
+ * Responsible for making requests to undocumented Steam API endpoints
+ *
+ * @author TheForbiddenAi
+ */
 public class SteamRequests {
 
     @Getter(value = AccessLevel.PROTECTED)
@@ -23,7 +28,7 @@ public class SteamRequests {
     /**
      * Gets a json list of games and DLCs ids with a 100% off discount
      *
-     * @return An optional containing the json information
+     * @return An optional containing the json information if found
      * @throws IOException If the mapper is unable to parse the json information, or if the URL is malformed
      */
     public Optional<JsonNode> getFreeGames() throws IOException {
@@ -34,9 +39,16 @@ public class SteamRequests {
                 .map(node -> node.get("items"));
     }
 
+    /**
+     * Gets json information for apps, packages, and bundles
+     *
+     * @param jsonIdList The ids of the apps package and bundles in the correct form (i.e. {"appId":123})
+     * @return An optional containing the json information if found
+     * @throws IOException If the mapper is unable to parse the json information, or if the URL is malformed
+     */
     public Optional<JsonNode> getItems(String jsonIdList) throws IOException {
         // See https://steamapi.xpaw.me/#IStoreBrowseService/GetItems for more info
-        // Note: You do not need an access key despite it saying you do
+        // Note: You do not need an access key despite it saying you do. It also does not need to be protobuf encoded
         String url = "https://api.steampowered.com/IStoreBrowseService/GetItems/v1" +
                 "?input_json={\"ids\":[" + jsonIdList + "]," +
                 "\"context\":{\"language\":\"english\",\"country_code\":\"US\",\"steam_realm\":1}," +

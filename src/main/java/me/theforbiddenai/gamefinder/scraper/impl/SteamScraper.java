@@ -16,6 +16,11 @@ import me.theforbiddenai.gamefinder.utilities.SteamWebScrape;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Class responsible for retrieving games with a 100% discount from Steam
+ *
+ * @author TheForbiddenAi
+ */
 public class SteamScraper extends Scraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
@@ -89,7 +94,7 @@ public class SteamScraper extends Scraper {
                 .orElse(false);
 
         // Make sure that includeDLCs is enabled if game is a DLC
-        if(isDLC && !CONFIG.includeDLCs()) return null;
+        if (isDLC && !CONFIG.includeDLCs()) return null;
 
         // Form steam store url for the listing
         String gameUrl = GameFinderConstants.STEAM_STORE_URL + itemNode.get("store_url_path").asText("");
@@ -151,7 +156,7 @@ public class SteamScraper extends Scraper {
                 .map(node -> node.get("active_discounts"))
                 .orElse(null);
 
-        if(activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        if (activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Get the original price in cents. If it doesn't exist or is blank, return GameFinderConstants.NO_EXPIRATION_EPOCH
         long originalPriceInCents = Optional.ofNullable(bestPurchaseOption.get("original_price_in_cents"))
@@ -159,7 +164,8 @@ public class SteamScraper extends Scraper {
                 .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
 
         // Validate there is a price
-        if(originalPriceInCents == GameFinderConstants.NO_EXPIRATION_EPOCH) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        if (originalPriceInCents == GameFinderConstants.NO_EXPIRATION_EPOCH)
+            return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Loop through active discounts (unsure if it's possible for there to be more than one)
         for (JsonNode activeDiscount : activeDiscounts) {
@@ -170,13 +176,13 @@ public class SteamScraper extends Scraper {
 
             // Ensure that this is the correct discount by verifying that it is 100% off
             // by comparing the discountAmount to the originalPriceInCents
-            if(discountAmount == originalPriceInCents) {
+            if (discountAmount == originalPriceInCents) {
                 // Get the expirationEpoch if it exists, otherwise return GameFinderConstants.NO_EXPIRATION_EPOCH;
                 long expirationEpoch = Optional.ofNullable(activeDiscount.get("discount_end_date"))
                         .map(JsonNode::asLong)
                         .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
                 // Return the found expirationEpoch only if it is not GameFinderConstants.NO_EXPIRATION_EPOCH
-                if(expirationEpoch != GameFinderConstants.NO_EXPIRATION_EPOCH) return expirationEpoch;
+                if (expirationEpoch != GameFinderConstants.NO_EXPIRATION_EPOCH) return expirationEpoch;
             }
         }
 

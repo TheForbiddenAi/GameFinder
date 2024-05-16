@@ -6,9 +6,13 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.regex.Pattern;
 
+
 public class GameFinderConstants {
 
     public static final long NO_EXPIRATION_EPOCH = -1L;
+
+    // TODO: Move the below to the classes that use them
+
     public static final String STEAM_STORE_URL = "https://store.steampowered.com/";
     public static final String STEAM_CDN_URL = "https://cdn.cloudflare.steamstatic.com/";
 

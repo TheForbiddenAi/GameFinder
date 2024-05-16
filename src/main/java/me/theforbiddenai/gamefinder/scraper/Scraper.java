@@ -9,6 +9,12 @@ import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 
 import java.util.List;
 
+
+/**
+ * Defines common functionality and abstract methods for classes that retrieve free games from a service
+ *
+ * @author TheForbiddenAi
+ */
 public abstract class Scraper {
 
     @Getter(AccessLevel.PROTECTED)

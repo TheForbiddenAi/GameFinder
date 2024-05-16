@@ -9,6 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Holds information about a free game listing
+ *
+ * @author TheForbiddenAi
+ */
 @Data
 @Builder
 public class Game {

@@ -15,6 +15,11 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 
+/**
+ * Class responsible for retrieving games with a 100% discount from EpicGames
+ *
+ * @author TheForbiddenAi
+ */
 public class EpicGamesScraper extends Scraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();

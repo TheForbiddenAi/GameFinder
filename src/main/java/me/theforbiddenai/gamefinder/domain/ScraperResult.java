@@ -6,6 +6,11 @@ import lombok.ToString;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Holds information that is returning by Scraper classes
+ *
+ * @author TheForbiddenAi
+ */
 @Getter
 @ToString
 @EqualsAndHashCode
@@ -23,6 +28,5 @@ public class ScraperResult {
         this.game = null;
         this.futureGame = futureGame;
     }
-
 
 }

@@ -17,6 +17,11 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
+/**
+ * Responsible for web scraping expiration epochs from a steam listing page
+ *
+ * @author TheForbiddenAi
+ */
 public class SteamWebScrape {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
