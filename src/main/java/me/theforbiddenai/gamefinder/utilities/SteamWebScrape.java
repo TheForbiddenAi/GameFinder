@@ -10,12 +10,17 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Responsible for web scraping expiration epochs from a steam listing page
@@ -25,6 +30,15 @@ import java.util.regex.Matcher;
 public class SteamWebScrape {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
+
+    // Matches strings like May 10 @ 1:00PM
+    private static final Pattern STEAM_MONTH_DAY_TIME_REGEX = Pattern.compile("([A-z]{3} \\d{1,2}) (@ \\d{1,2}:\\d{2}(am|pm)?)");
+
+    // DateTimeFormatter for dates like May 10 @ 1:00PM
+    private static final DateTimeFormatter STEAM_DATE_FORMAT = new DateTimeFormatterBuilder()
+            .appendPattern("MMM dd @ h:mma")
+            .parseDefaulting(ChronoField.YEAR, Year.now().getValue())
+            .toFormatter();
 
     // TODO: Caching system?
 
@@ -69,7 +83,8 @@ public class SteamWebScrape {
                 .findFirst();
 
         // If there is no purchase section with the above criteria, return GameFinderConstants.NO_EXPIRATION_EPOCH
-        if (purchaseSection.isEmpty()) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        if (purchaseSection.isEmpty())
+            return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Get the paragraph element containing when the discount ends
         Element paragraph = purchaseSection.get().selectFirst("p.game_purchase_discount_quantity");
@@ -78,7 +93,7 @@ public class SteamWebScrape {
 
         // Utilize regular expressions to pull the date out
         // This only accounts for dates like May 18th @ 1:00 PM
-        Matcher matcher = GameFinderConstants.STEAM_MONTH_DAY_TIME_REGEX.matcher(paragraph.text());
+        Matcher matcher = STEAM_MONTH_DAY_TIME_REGEX.matcher(paragraph.text());
 
         // TODO: Account for dates with no time and default to end of day 11:59 PM for time
         // TODO: Account for listings with countdowns i.e. 44:32:01 (unsure if these will ever need to actually be web scraped)
@@ -92,7 +107,7 @@ public class SteamWebScrape {
                 .replace("pm", "PM");
 
         // Parse expirationDate using GameFinderConstants.STEAM_DATE_FORMAT to get epochSecond
-        return LocalDateTime.parse(expirationDate, GameFinderConstants.STEAM_DATE_FORMAT)
+        return LocalDateTime.parse(expirationDate, STEAM_DATE_FORMAT)
                 // By default, Steam will give a date in PST
                 .atZone(ZoneId.of("America/Los_Angeles"))
                 // Convert timezone to the system default

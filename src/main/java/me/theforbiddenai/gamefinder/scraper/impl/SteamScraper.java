@@ -25,6 +25,10 @@ public class SteamScraper extends Scraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
+    private static final String STEAM_STORE_URL = "https://store.steampowered.com/";
+    private static final String STEAM_CDN_URL = "https://cdn.cloudflare.steamstatic.com/";
+
+
     private final SteamRequests steamRequests;
     private final SteamWebScrape steamWebScrape;
 
@@ -97,7 +101,7 @@ public class SteamScraper extends Scraper {
         if (isDLC && !CONFIG.includeDLCs()) return null;
 
         // Form steam store url for the listing
-        String gameUrl = GameFinderConstants.STEAM_STORE_URL + itemNode.get("store_url_path").asText("");
+        String gameUrl = STEAM_STORE_URL + itemNode.get("store_url_path").asText("");
 
         // Get short description from basic_info. Bundles do not have descriptions
         String description = Optional.ofNullable(itemNode.get("basic_info"))
@@ -208,7 +212,7 @@ public class SteamScraper extends Scraper {
         // Can't form urls without the asset url format
         if (assetUrlFormat.isBlank()) return Map.of();
 
-        String cdnUrlFormat = GameFinderConstants.STEAM_CDN_URL + assetUrlFormat;
+        String cdnUrlFormat = STEAM_CDN_URL + assetUrlFormat;
 
         Map<String, String> storeMedia = new HashMap<>();
 
@@ -282,7 +286,7 @@ public class SteamScraper extends Scraper {
             if (filename.isBlank()) continue;
 
             // Append CDN Url to file name and add it to screenshots list
-            screenshots.add(GameFinderConstants.STEAM_CDN_URL + filename);
+            screenshots.add(STEAM_CDN_URL + filename);
         }
 
         return screenshots;

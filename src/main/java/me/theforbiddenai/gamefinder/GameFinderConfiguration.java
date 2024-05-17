@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 
+/**
+ * Singleton class that contains the configuration settings for GameFinder
+ */
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
