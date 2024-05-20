@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +28,8 @@ import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GameFinderTest {
+
+    private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
     private GameFinder gameFinder;
 
@@ -42,6 +45,15 @@ public class GameFinderTest {
         this.mockEpicGamesScraper = mock(EpicGamesScraper.class);
         this.mockSteamScraper = mock(SteamScraper.class);
 
+        injectMockScrapers();
+    }
+
+    /**
+     * Injects the mockScraper objects into the scraper field of a GameFinder class
+     *
+     * @throws IllegalAccessException If the scraper field is unable to be set
+     */
+    private void injectMockScrapers() throws IllegalAccessException {
         // Pull out private scrapers field from GameFinder class
         Field field = ReflectionUtils.findFields(GameFinder.class, f -> f.getName().equals("scrapers"),
                         ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
@@ -99,8 +111,7 @@ public class GameFinderTest {
 
     @Test
     public void testRetrieveGames() throws GameRetrievalException {
-        GameFinderConfiguration.getInstance().getEnabledPlatforms()
-                .addAll(List.of(Platform.EPIC_GAMES, Platform.STEAM));
+        CONFIG.getEnabledPlatforms().addAll(List.of(Platform.EPIC_GAMES, Platform.STEAM));
 
         List<Game> expectedGames = new ArrayList<>();
         expectedGames.addAll(expectedEpicGamesResults);
@@ -114,7 +125,26 @@ public class GameFinderTest {
         assertTrue(expectedGames.containsAll(actualGames));
     }
 
-    // TODO: Add test for async retrieveGames
+    @Test
+    public void testRetrieveGamesAsync() throws InterruptedException {
+        CONFIG.getEnabledPlatforms().addAll(List.of(Platform.EPIC_GAMES, Platform.STEAM));
+
+        List<Game> expectedGames = new ArrayList<>();
+        expectedGames.addAll(expectedEpicGamesResults);
+        expectedGames.addAll(expectedSteamResults);
+
+        List<Game> actualGames = new ArrayList<>();
+
+        gameFinder.retrieveGamesAsync(actualGames::addAll);
+
+        // Wait for retrieveGamesAsync to finish executing
+        CONFIG.getExecutorService().awaitTermination(30, TimeUnit.SECONDS);
+
+        // Confirm that the actualGames list is equal to expectGames (excluding order)
+        assertEquals(expectedGames.size(), actualGames.size());
+        assertTrue(expectedGames.containsAll(actualGames));
+
+    }
 
     /**
      * Converts a list of ScraperResults into game objects
