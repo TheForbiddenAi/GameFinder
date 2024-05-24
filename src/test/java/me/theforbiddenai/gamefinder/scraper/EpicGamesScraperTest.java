@@ -7,7 +7,6 @@ import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
-import me.theforbiddenai.gamefinder.exception.LocaleException;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
 import me.theforbiddenai.gamefinder.utilities.GraphQLClient;
 import okhttp3.Call;
@@ -24,7 +23,6 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
@@ -48,9 +46,7 @@ public class EpicGamesScraperTest {
     // Test Setup
 
     @BeforeAll
-    public void setupJson() throws IOException, LocaleException {
-        GameFinderConfiguration.getInstance().setLocale(Locale.US);
-
+    public void setupJson() throws IOException {
         this.mapper = Mockito.spy(new ObjectMapper());
         this.treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic_games_data/epic-games-scraper-test-data.json"));
 
@@ -137,6 +133,7 @@ public class EpicGamesScraperTest {
 
     /**
      * Setups all the mock calls for {@link this#mockClient}
+     *
      * @throws IOException This will never happen
      */
     private void setupOkHttpMocks() throws IOException {
