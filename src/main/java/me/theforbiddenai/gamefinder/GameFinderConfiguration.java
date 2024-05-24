@@ -32,6 +32,10 @@ public class GameFinderConfiguration {
     @Accessors(fluent = true)
     private boolean allowSteamMatureContentScreenshots = true;
 
+    private String locale = "en-US";
+
+    private String countryCode = "US";
+
     // Controls what executorService is used to execute the CompletableFutures
     private ExecutorService executorService = ForkJoinPool.commonPool();
 

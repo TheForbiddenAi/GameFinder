@@ -22,6 +22,7 @@ public class Game {
     private String description;
     private String url;
     private boolean isDLC;
+    private int price;
 
     @Builder.Default
     private Platform platform = Platform.UNDEFINED;
