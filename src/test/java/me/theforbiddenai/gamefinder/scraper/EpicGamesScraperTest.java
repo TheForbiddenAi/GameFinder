@@ -7,6 +7,7 @@ import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
+import me.theforbiddenai.gamefinder.exception.LocaleException;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
 import me.theforbiddenai.gamefinder.utilities.GraphQLClient;
 import okhttp3.Call;
@@ -23,6 +24,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
@@ -46,11 +48,13 @@ public class EpicGamesScraperTest {
     // Test Setup
 
     @BeforeAll
-    public void setupJson() throws IOException {
+    public void setupJson() throws IOException, LocaleException {
+        GameFinderConfiguration.getInstance().setLocale(Locale.US);
+
         this.mapper = Mockito.spy(new ObjectMapper());
         this.treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic_games_data/epic-games-scraper-test-data.json"));
 
-        this.graphQLClient = new GraphQLClient(mapper, "en-US", "US");
+        this.graphQLClient = new GraphQLClient(mapper);
         this.mockClient = Mockito.mock(OkHttpClient.class);
     }
 
@@ -67,6 +71,7 @@ public class EpicGamesScraperTest {
                 .title("Game")
                 .description("Cool game.")
                 .url("https://store.epicgames.com/en-US/p/productSlug")
+                .originalPrice("$10.99")
                 .platform(Platform.EPIC_GAMES)
                 .isDLC(false)
                 .storeMedia(Map.of("DieselStoreFrontTall", "url-1", "DieselStoreFrontWide", "url-2"))
@@ -78,6 +83,7 @@ public class EpicGamesScraperTest {
                 .title("DLC")
                 .description("Cool DLC.")
                 .url("https://store.epicgames.com/en-US/p/pageSlug")
+                .originalPrice("$2.99")
                 .isDLC(true)
                 .platform(Platform.EPIC_GAMES)
                 .storeMedia(Map.of("OfferImageWide", "url-1", "OfferImageTall", "url-2"))

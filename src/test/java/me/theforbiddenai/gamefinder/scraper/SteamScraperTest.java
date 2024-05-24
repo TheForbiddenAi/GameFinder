@@ -67,9 +67,10 @@ public class SteamScraperTest {
 
     @BeforeEach
     public void setupGameLists() {
-        Game gameOne = Game.builder()
+        Game gameApp = Game.builder()
                 .title("App")
                 .description("Cool App!")
+                .originalPrice("$1.99")
                 .url("https://store.steampowered.com/app/1/Cool_App")
                 .platform(Platform.STEAM)
                 .isDLC(true)
@@ -84,9 +85,10 @@ public class SteamScraperTest {
                 .expirationEpoch(1716310800L)
                 .build();
 
-        Game gameTwo = Game.builder()
+        Game gamePackage = Game.builder()
                 .title("Package")
                 .description("N/A")
+                .originalPrice("$2.99")
                 .url("https://store.steampowered.com/sub/2/Cool_Package")
                 .isDLC(false)
                 .platform(Platform.STEAM)
@@ -99,13 +101,14 @@ public class SteamScraperTest {
                 .expirationEpoch(1716310800L)
                 .build();
 
-        Game gameThree = Game.builder()
+        Game gameBundle = Game.builder()
                 .title("Bundle")
                 .description("N/A")
+                .originalPrice("$3.99")
                 .url("https://store.steampowered.com/bundle/3")
                 .isDLC(false)
                 .platform(Platform.STEAM)
-                .storeMedia(Map.of("main_capsule", "https://cdn.cloudflare.steamstatic.com/steam/bundles/1/eeeee/capsule_616x353.jpg?t=1"))
+                .storeMedia(Map.of("main_capsule", "https://cdn.cloudflare.steamstatic.com/steam/bundles/3/eeeee/capsule_616x353.jpg?t=1"))
                 .media(List.of())
                 .expirationEpoch(1716310800L)
                 .build();
@@ -113,19 +116,18 @@ public class SteamScraperTest {
         Game gameTwoNoMatureContent = Game.builder()
                 .title("Package")
                 .description("N/A")
+                .originalPrice("$2.99")
                 .url("https://store.steampowered.com/sub/2/Cool_Package")
                 .isDLC(false)
                 .platform(Platform.STEAM)
                 .storeMedia(Map.of())
-                .media(List.of(
-                        "https://cdn.cloudflare.steamstatic.com/steam/subs/2/ss_1.jpg?t=1"
-                ))
+                .media(List.of("https://cdn.cloudflare.steamstatic.com/steam/subs/2/ss_1.jpg?t=1"))
                 .expirationEpoch(1716310800L)
                 .build();
 
-        expectedGamesWithDLCs = List.of(new ScraperResult(gameOne), new ScraperResult(gameTwo), new ScraperResult(gameThree));
-        expectedGamesWithoutMatureContent = List.of(new ScraperResult(gameOne), new ScraperResult(gameTwoNoMatureContent), new ScraperResult(gameThree));
-        expectedGamesWithoutDLCs = List.of(new ScraperResult(gameTwo), new ScraperResult(gameThree));
+        expectedGamesWithDLCs = List.of(new ScraperResult(gameApp), new ScraperResult(gamePackage), new ScraperResult(gameBundle));
+        expectedGamesWithoutMatureContent = List.of(new ScraperResult(gameApp), new ScraperResult(gameTwoNoMatureContent), new ScraperResult(gameBundle));
+        expectedGamesWithoutDLCs = List.of(new ScraperResult(gamePackage), new ScraperResult(gameBundle));
     }
 
     @Test

@@ -31,9 +31,8 @@
             "price": {
               "totalPrice": {
                 "discountPrice": 0,
-                "originalPrice": 499,
-                "currencyInfo": {
-                  "decimals": 2
+                "fmtPrice": {
+                  "originalPrice": "$10.99"
                 }
               },
               "lineOffers": [
@@ -82,9 +81,8 @@
             "price": {
               "totalPrice": {
                 "discountPrice": 0,
-                "originalPrice": 499,
-                "currencyInfo": {
-                  "decimals": 2
+                "fmtPrice": {
+                  "originalPrice": "$2.99"
                 }
               },
               "lineOffers": [
@@ -106,8 +104,7 @@
             "offerType": "ADD_ON",
             "price": {
               "totalPrice": {
-                "discountPrice": 399,
-                "originalPrice": 399
+                "discountPrice": 399
               }
             }
           }

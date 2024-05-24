@@ -109,11 +109,19 @@ public class SteamScraper extends Scraper {
                 .map(JsonNode::asText)
                 .orElse("N/A");
 
+        // Retrieves the formatted price and strips all spaces from it
+        String originalPrice = Optional.ofNullable(itemNode.get("best_purchase_option"))
+                .map(node -> node.get("formatted_original_price"))
+                .map(node -> node.asText(""))
+                .orElse("")
+                .replaceAll("\\s+", "");
+
         // Build game from information available in itemNode
         Game game = Game.builder()
                 .title(itemNode.get("name").asText())
                 .description(description)
                 .url(gameUrl)
+                .originalPrice(originalPrice)
                 .isDLC(isDLC)
                 .platform(Platform.STEAM)
                 .storeMedia(getStoreMedia(itemNode))

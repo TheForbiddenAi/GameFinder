@@ -6,9 +6,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import me.theforbiddenai.gamefinder.domain.Platform;
+import me.theforbiddenai.gamefinder.exception.LocaleException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 
@@ -35,9 +37,8 @@ public class GameFinderConfiguration {
     @Accessors(fluent = true)
     private boolean allowSteamMatureContentScreenshots = true;
 
-    private String locale = "en-US";
-
-    private String countryCode = "US";
+    // By default, English will return if a game developer has not translated their description
+    private Locale locale = Locale.US;
 
     // Controls what executorService is used to execute the CompletableFutures
     private ExecutorService executorService = ForkJoinPool.commonPool();
@@ -45,6 +46,15 @@ public class GameFinderConfiguration {
     public static GameFinderConfiguration getInstance() {
         if (INSTANCE == null) INSTANCE = new GameFinderConfiguration();
         return INSTANCE;
+    }
+
+    /**
+     * @throws LocaleException If the provided locale does not have both a language code and a country code
+     */
+    public void setLocale(Locale locale) throws LocaleException {
+        if (!locale.toString().contains("_"))
+            throw new LocaleException("A locale must have both a language code and country code!");
+        this.locale = locale;
     }
 
 }

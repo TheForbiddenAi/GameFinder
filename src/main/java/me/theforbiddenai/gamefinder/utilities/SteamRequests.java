@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.Getter;
+import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -15,6 +17,8 @@ import java.util.Optional;
  * @author TheForbiddenAi
  */
 public class SteamRequests {
+
+    private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
     @Getter(value = AccessLevel.PROTECTED)
     private final ObjectMapper mapper;
@@ -49,10 +53,12 @@ public class SteamRequests {
     public Optional<JsonNode> getItems(String jsonIdList) throws IOException {
         // See https://steamapi.xpaw.me/#IStoreBrowseService/GetItems for more info
         // Note: You do not need an access key despite it saying you do. It also does not need to be protobuf encoded
+        Locale locale = CONFIG.getLocale();
+
         String url = "https://api.steampowered.com/IStoreBrowseService/GetItems/v1" +
-                "?input_json={\"ids\":[" + jsonIdList + "]," +
-                "\"context\":{\"language\":\"english\",\"country_code\":\"US\",\"steam_realm\":1}," +
-                "\"data_request\":{\"include_basic_info\":true,\"include_assets\":true,\"include_screenshots\":true}}";
+                "?input_json={\"ids\":[" + jsonIdList + "],\"context\":" +
+                "{\"language\":\"" + locale.getDisplayLanguage() + "\",\"country_code\":\"" + locale.getCountry() +
+                "\",\"steam_realm\":1},\"data_request\":{\"include_basic_info\":true,\"include_assets\":true,\"include_screenshots\":true}}";
 
         return Optional.ofNullable(mapper.readTree(new URL(url)))
                 .map(node -> node.get("response"))

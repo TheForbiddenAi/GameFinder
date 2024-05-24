@@ -35,7 +35,7 @@ public class EpicGamesScraper extends Scraper {
     public EpicGamesScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.EPIC_GAMES);
 
-        this.graphQLClient = new GraphQLClient(objectMapper, CONFIG.getLocale(), CONFIG.getCountryCode());
+        this.graphQLClient = new GraphQLClient(objectMapper);
     }
 
     /**
@@ -99,14 +99,21 @@ public class EpicGamesScraper extends Scraper {
 
         int discount = totalPrice.get("discountPrice").asInt();
 
-        // Filter out all listings with a discount of 0 (only if the originalPrice isn't 0. Some listings 0 out both despite being on sale)
-        // This includes the "Mystery Game" postings EpicGames shows before the game is announced
+        // Filter out all listings that do not have a 100% discount
         if (discount != 0) return Optional.empty();
+
+        // Retrieves the formatted price and strips all spaces from it
+        String originalPrice = Optional.ofNullable(totalPrice.get("fmtPrice"))
+                .map(node -> node.get("originalPrice"))
+                .map(node -> node.asText(""))
+                .orElse("")
+                .replaceAll("\\s+", "");
 
         Game.GameBuilder gameBuilder = Game.builder()
                 .title(gameJson.get("title").asText())
                 .description(gameJson.get("description").asText())
                 .url(getGameUrl(gameJson, isDLC))
+                .originalPrice(originalPrice)
                 .isDLC(isDLC)
                 .platform(Platform.EPIC_GAMES)
                 .expirationEpoch(getOfferExpirationEpoch(priceJson));
@@ -226,7 +233,7 @@ public class EpicGamesScraper extends Scraper {
      *
      * @param start The entry to start at
      * @return A JsonNode containing the json data
-     * @throws IOException If objectMapper fails to read the data;
+     * @throws IOException If objectMapper fails to read the data
      */
     private JsonNode retrieveJson(int start) throws IOException {
 
@@ -239,7 +246,7 @@ public class EpicGamesScraper extends Scraper {
         // Retrieve addons if DLCs is enabled
         category = CONFIG.includeDLCs() ? category + "|addons" : category;
 
-        variables.put("allowCountries", CONFIG.getCountryCode());
+        variables.put("allowCountries", CONFIG.getLocale().getCountry());
         variables.put("category", category);
         variables.put("count", MAX_ENTRIES);
         variables.put("onSale", true);
