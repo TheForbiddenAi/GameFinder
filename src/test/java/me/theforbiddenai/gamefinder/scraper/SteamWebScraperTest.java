@@ -31,10 +31,11 @@ public class SteamWebScraperTest {
 
     @BeforeAll
     public void setupTests() throws IOException {
-        this.webScraper = new SteamWebScrape();
-        mockJsoup = Mockito.mockStatic(Jsoup.class);
-
+        // This must be done before the jsoup mock is initiated
         Document document = Jsoup.parse(SteamWebScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-app-page-with-discount.html"), "UTF-8", "");
+
+        this.webScraper = new SteamWebScrape();
+        this.mockJsoup = Mockito.mockStatic(Jsoup.class);
 
         Connection mockConnection = mock(Connection.class);
         // Setup mockConnection
@@ -43,12 +44,12 @@ public class SteamWebScraperTest {
         when(mockConnection.get()).thenReturn(document);
 
         // Intercept CompletableFuture.supplyAsync calls and inject static mock for jsoup
-        mockCompletableFuture = mockStatic(CompletableFuture.class, invoker -> {
+        this.mockCompletableFuture = mockStatic(CompletableFuture.class, invoker -> {
             // Continue executing CompletableFuture without inject if supplyAsync isn't called
             if (!invoker.getMethod().getName().equals("supplyAsync")) return invoker.callRealMethod();
 
             // Inject static mock inside CompletableFuture
-            mockJsoup.when(() -> Jsoup.connect(Mockito.anyString())).thenReturn(mockConnection);
+            this.mockJsoup.when(() -> Jsoup.connect(Mockito.anyString())).thenReturn(mockConnection);
 
             // Continue executing completableFuture
             Supplier<?> supplier = invoker.getArgument(0);
@@ -59,8 +60,8 @@ public class SteamWebScraperTest {
 
     @AfterAll
     public void closeStaticMocks() {
-        mockJsoup.close();
-        mockCompletableFuture.close();
+        this.mockJsoup.close();
+        this.mockCompletableFuture.close();
     }
 
     @Test
@@ -69,7 +70,7 @@ public class SteamWebScraperTest {
                 .url("")
                 .build();
 
-        webScraper.webScrapeExpirationEpoch(game).join();
+        this.webScraper.webScrapeExpirationEpoch(game).join();
         assertEquals(1715878800L, game.getExpirationEpoch());
     }
 

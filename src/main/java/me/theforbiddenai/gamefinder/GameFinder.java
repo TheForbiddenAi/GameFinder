@@ -17,10 +17,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Main class for GameFinder; contains the functions that are used to retrieve
+ * games both synchronously and asynchronously from all enabled platforms
+ *
+ * @author TheForbiddenAi
+ */
 public class GameFinder {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
+    private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
+
     private final List<Scraper> scrapers;
 
     public GameFinder() {
@@ -31,6 +38,15 @@ public class GameFinder {
         this.scrapers.add(new EpicGamesScraper(MAPPER));
     }
 
+    /**
+     * Retrieves games with a 100% discount from all the platforms listed
+     * in {@link GameFinderConfiguration#getEnabledPlatforms()}. This function
+     * is synchronous. However, JSoup web scraping is done asynchronously in a
+     * non-blocking manner until all other games have been processed
+     *
+     * @return A list of retrieved games
+     * @throws GameRetrievalException If the games can not be retrieved for some reason
+     */
     public List<Game> retrieveGames() throws GameRetrievalException {
         List<ScraperResult> scraperResults = new ArrayList<>();
 
@@ -40,6 +56,7 @@ public class GameFinder {
                 scraperResults.addAll(scraper.retrieveResults());
             }
         }
+
 
         List<Game> readyGames = new ArrayList<>();
         List<CompletableFuture<Game>> futureGames = new ArrayList<>();
@@ -62,14 +79,21 @@ public class GameFinder {
         return readyGames;
     }
 
-    public void retrieveGamesAsync(GameRetrievalCallback callback) {
+    /**
+     * Retrieves games with a 100% discount from all the platforms listed
+     * in {@link GameFinderConfiguration#getEnabledPlatforms()}. This function
+     * is asynchronous. As games are retrieved the callback function is called
+     *
+     * @param callback The function that is called once a batch of games is ready
+     */
+    public void retrieveGamesAsync(@NonNull GameRetrievalCallback callback) {
         CompletableFuture.runAsync(() -> {
 
             List<CompletableFuture<List<ScraperResult>>> scraperFutures = new ArrayList<>();
 
             // Loop through scrapers
             for (Scraper scraper : scrapers) {
-                // Makes sure that the platform is enabled before retrieving games
+                // Makes sure that  the platform is enabled before retrieving games
                 if (CONFIG.getEnabledPlatforms().contains(scraper.getPlatform())) {
                     // Run scraper.retrieveGames async
                     scraperFutures.add(getGamesFromScraperAsync(scraper));
@@ -94,7 +118,8 @@ public class GameFinder {
                     }
 
                     // Resolve all CompletableFutures in futureGames and send the resolved games to the callback
-                    if (!futureGames.isEmpty()) resolveFutureGames(readyGames, futureGames, callback);
+                    if (!futureGames.isEmpty())
+                        resolveFutureGames(readyGames, futureGames, callback);
                 });
             });
         }, CONFIG.getExecutorService());
@@ -112,8 +137,10 @@ public class GameFinder {
             List<Game> readyGames,
             List<CompletableFuture<Game>> futureGames) {
         results.forEach(scraperResult -> {
-            if (scraperResult.getGame() != null) readyGames.add(scraperResult.getGame());
-            if (scraperResult.getFutureGame() != null) futureGames.add(scraperResult.getFutureGame());
+            if (scraperResult.getGame() != null)
+                readyGames.add(scraperResult.getGame());
+            if (scraperResult.getFutureGame() != null)
+                futureGames.add(scraperResult.getFutureGame());
         });
     }
 
