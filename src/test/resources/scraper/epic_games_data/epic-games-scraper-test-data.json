@@ -1,1 +1,118 @@
-{"data": {"Catalog": {"searchStore": {"elements": [{"title": "Game", "description": "Cool game.", "offerType": "BASE_GAME", "keyImages": [{"type": "DieselStoreFrontTall", "url": "url-1"}, {"type": "DieselStoreFrontWide", "url": "url-2"}, {"type": "featuredMedia", "url": "url-3"}, {"type": "featuredMedia", "url": "url-4"}], "catalogNs": {"mappings": [{"pageSlug": "pageSlug"}]}, "offerMappings": [], "price": {"totalPrice": {"discount": 1999}}, "promotions": {"promotionalOffers": [{"promotionalOffers": [{"endDate": "2024-05-16T15:00:00.000Z"}]}]}}, {"offerType": "ADD_ON", "price": {"totalPrice": {"discountPrice": 399, "originalPrice": 399, "voucherDiscount": 0, "discount": 0}}}, {"title": "DLC", "description": "Cool DLC.", "offerType": "ADD_ON", "keyImages": [{"type": "OfferImageWide", "url": "url-1"}, {"type": "OfferImageTall", "url": "url-2"}, {"type": "featuredMedia", "url": "url-3"}], "offerMappings": [{"pageSlug": "offerSlug"}], "price": {"totalPrice": {"discount": 9999}}, "promotions": {"promotionalOffers": [{"promotionalOffers": [{"endDate": "2024-05-16T15:00:00.000Z"}]}]}}]}}}}
+{
+  "data": {
+    "Catalog": {
+      "searchStore": {
+        "elements": [
+          {
+            "title": "Game",
+            "description": "Cool game.",
+            "offerType": "BASE_GAME",
+            "productSlug": "productSlug",
+            "urlSlug": "urlSlug",
+            "keyImages": [
+              {
+                "type": "DieselStoreFrontTall",
+                "url": "url-1"
+              },
+              {
+                "type": "DieselStoreFrontWide",
+                "url": "url-2"
+              },
+              {
+                "type": "featuredMedia",
+                "url": "url-3"
+              },
+              {
+                "type": "featuredMedia",
+                "url": "url-4"
+              }
+            ],
+            "offerMappings": [],
+            "price": {
+              "totalPrice": {
+                "discountPrice": 0,
+                "originalPrice": 499,
+                "currencyInfo": {
+                  "decimals": 2
+                }
+              },
+              "lineOffers": [
+                {
+                  "appliedRules": [
+                    {
+                      "endDate": "2024-05-16T15:00:00.000Z",
+                      "discountSetting": {
+                        "discountType": "PERCENTAGE",
+                        "discountPercentage": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "title": "DLC",
+            "description": "Cool DLC.",
+            "offerType": "ADD_ON",
+            "productSlug": null,
+            "urlSlug": null,
+            "keyImages": [
+              {
+                "type": "OfferImageWide",
+                "url": "url-1"
+              },
+              {
+                "type": "OfferImageTall",
+                "url": "url-2"
+              },
+              {
+                "type": "featuredMedia",
+                "url": "url-3"
+              }
+            ],
+            "catalogNs": {
+              "mappings": [
+                {
+                  "pageSlug": "pageSlug",
+                  "pageType": "productHome"
+                }
+              ]
+            },
+            "price": {
+              "totalPrice": {
+                "discountPrice": 0,
+                "originalPrice": 499,
+                "currencyInfo": {
+                  "decimals": 2
+                }
+              },
+              "lineOffers": [
+                {
+                  "appliedRules": [
+                    {
+                      "endDate": "2024-05-16T15:00:00.000Z",
+                      "discountSetting": {
+                        "discountType": "PERCENTAGE",
+                        "discountPercentage": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "offerType": "ADD_ON",
+            "price": {
+              "totalPrice": {
+                "discountPrice": 399,
+                "originalPrice": 399
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

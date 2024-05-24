@@ -50,21 +50,28 @@ public class EpicGamesScraper extends Scraper {
             List<ScraperResult> scraperResults = new ArrayList<>();
 
             // Pull games from the GraphQL API in batches of MAX_ENTRIES until a game that does not have a 100% discount is found
+            // This works because EpicGames' GraphQL API allows you to sort the returned objects by price
             while (shouldContinue) {
                 JsonNode jNode = retrieveJson(start);
 
                 // Loop through jNode elements,
                 for (JsonNode gameJson : jNode) {
+                    // Convert each element to a game object using jsonToGame,
                     Optional<Game> optionalGame = jsonToGame(gameJson);
+                    // Returned game is not 100%, break the for loop
                     if (optionalGame.isEmpty()) {
                         shouldContinue = false;
                         break;
                     }
 
-                    // Convert each element to a game object using jsonToGame,
-                    // then wrap the nonnull objects in a ScraperResult class and add them to scraperResults list
-                    scraperResults.add(new ScraperResult(optionalGame.get()));
+                    Game game = optionalGame.get();
                     start++;
+
+                    // This shouldn't happen due to the way the information is requested from the GraphQL API.
+                    if (!CONFIG.includeDLCs() && game.isDLC()) continue;
+
+                    // Wrap game object in a ScraperResult class and add it to the scraperResults list
+                    scraperResults.add(new ScraperResult(game));
                 }
             }
 
@@ -162,8 +169,9 @@ public class EpicGamesScraper extends Scraper {
         if (catalogNs.has("mappings")) {
             for (JsonNode mapping : catalogNs.get("mappings")) {
                 if (!mapping.has("pageSlug")) continue;
+                if (!mapping.has("pageType")) continue;
                 // Make sure that we are grabbing the productHome mapping and not some random DLC/offer
-                if (!mapping.get("productHome").asText("").equalsIgnoreCase("productHome")) continue;
+                if (!mapping.get("pageType").asText("").equalsIgnoreCase("productHome")) continue;
                 return EPIC_URL_PREFIX + mapping.get("pageSlug").asText();
             }
         }

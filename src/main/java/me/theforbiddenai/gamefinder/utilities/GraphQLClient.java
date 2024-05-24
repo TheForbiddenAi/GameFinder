@@ -10,8 +10,8 @@ import java.util.Map;
 
 public class GraphQLClient {
 
+    // See https://github.com/SD4RK/epicstore_api for more info
     public static final String STORE_QUERY = "query searchStoreQuery($allowCountries: String, $category: String, $count: Int, $country: String! $locale: String, $itemNs: String, $sortBy: String, $sortDir: String, $start: Int $onSale: Boolean, $withPrice: Boolean = false, $withPromotions: Boolean = false) { Catalog { searchStore(allowCountries: $allowCountries, category: $category, count: $count, country: $country, locale: $locale, itemNs: $itemNs, sortBy: $sortBy, sortDir: $sortDir, start: $start, onSale: $onSale) { elements { title description offerType keyImages { type url } productSlug urlSlug catalogNs { mappings { pageSlug pageType } } price(country: $country) @include(if: $withPrice) { totalPrice { discountPrice originalPrice currencyInfo { decimals } } lineOffers { appliedRules { startDate endDate discountSetting { discountType discountPercentage } } } } promotions(category: $category) @include(if: $withPromotions) { promotionalOffers { promotionalOffers { startDate endDate discountSetting { discountType discountPercentage } } } } } } } }";
-
 
     private static final MediaType JSON = MediaType.get("application/json");
     private static final String EPIC_GAMES_GRAPHQL_URL = "https://graphql.epicgames.com/graphql";

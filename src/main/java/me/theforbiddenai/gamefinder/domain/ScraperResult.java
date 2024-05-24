@@ -7,7 +7,7 @@ import lombok.ToString;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Holds information that is returning by Scraper classes
+ * Holds information that is returned by Scraper classes
  *
  * @author TheForbiddenAi
  */
