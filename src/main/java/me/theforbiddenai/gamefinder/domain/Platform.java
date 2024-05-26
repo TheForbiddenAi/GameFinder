@@ -9,6 +9,7 @@ public enum Platform {
 
     STEAM,
     EPIC_GAMES,
+    GOG,
     UNDEFINED
 
 }
