@@ -8,7 +8,7 @@ import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
-import me.theforbiddenai.gamefinder.utilities.GraphQLClient;
+import me.theforbiddenai.gamefinder.utilities.epicgames.GraphQLClient;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;

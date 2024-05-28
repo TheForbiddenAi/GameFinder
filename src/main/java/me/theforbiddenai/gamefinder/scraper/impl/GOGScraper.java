@@ -8,7 +8,8 @@ import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
-import me.theforbiddenai.gamefinder.scraper.Scraper;
+import me.theforbiddenai.gamefinder.scraper.GameScraper;
+import me.theforbiddenai.gamefinder.utilities.gog.GOGRequests;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -24,29 +25,58 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GOGScraper extends Scraper {
+public class GOGScraper extends GameScraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
     private static final Pattern CARD_PRODUCT_PATTERN = Pattern.compile("cardProduct: (\\{.*})");
     private static final Pattern CARD_PROMO_END_PATTERN = Pattern.compile("window\\.productcardData\\.cardProductPromoEndDate = (\\{.*})");
 
+    // First %s is for language, second %s is for the game slug
+    private static final String GOG_GAME_URL_FORMAT = "https://www.gog.com/%s/game/%s";
+
     private final OkHttpClient httpClient;
+    private final GOGRequests gogRequests;
 
     public GOGScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.GOG);
 
         this.httpClient = new OkHttpClient();
+        this.gogRequests = new GOGRequests(objectMapper);
     }
 
     @Override
     public List<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
             // System.out.println(retrieveGameList());
-            JsonNode gameListNode = retrieveGameList();
-            for (JsonNode gameNode : gameListNode) {
-                retrieveGameFromGOG(gameNode);//.join();
-            }
+//            JsonNode gameListNode = retrieveGameList();
+//            for (JsonNode gameNode : gameListNode) {
+//                retrieveGameFromGOG(gameNode);//.join();
+//            }
+
+            // TODO: REMOVE THIS
+            gogRequests.getHomePageSections().ifPresent(node -> {
+                for (JsonNode sectionNode : node) {
+                    if(!sectionNode.get("sectionType").asText().equals("GIVEAWAY_SECTION")) continue;
+
+                    try {
+                        gogRequests.getHomePageSection(sectionNode.get("sectionId").asText()).ifPresent(nod2 -> {
+                            try {
+                                System.out.println(retrieveGameFromGOG(nod2.get("product")).join());
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            } catch (GameRetrievalException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }
+            });
+
+
         } catch (IOException ex) {
             throw new GameRetrievalException("Unable to retrieve games from GOG", ex);
         }
@@ -63,20 +93,23 @@ public class GOGScraper extends Scraper {
                     .map(node -> node.get("base"))
                     .map(node -> node.asText(""))
                     .orElse("");
+            System.out.println(gameListNode);
 
             Map<String, String> storeMedia = new HashMap<>();
             storeMedia.put("coverHorizontal", gameListNode.get("coverHorizontal").asText());
             storeMedia.put("coverVertical", gameListNode.get("coverVertical").asText());
 
-            String url = gameListNode.get("storeLink").asText();
+            // I use slug instead of storeLink because the giveaway object does not contain a storeLink object
+            String urlSlug = gameListNode.get("slug").asText();
+            String url = String.format(GOG_GAME_URL_FORMAT, CONFIG.getLocale().getLanguage(), urlSlug);
             try {
-                JsonNode productCardData = getProductCardData(gameListNode.get("storeLink").asText());
+                JsonNode productCardData = getProductCardData(url);
 
-                JsonNode cardProductNode = productCardData.get("cardProduct");
+               // JsonNode cardProductNode = productCardData.get("cardProduct");
 
                 Game.GameBuilder gameBuilder = Game.builder()
                         .title(gameListNode.get("title").asText())
-                        .description(getDescription(cardProductNode))
+                       // .description(getDescription(cardProductNode))
                         .url(url)
                         .isDLC(isDLC)
                         .originalPrice(originalPrice)

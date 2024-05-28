@@ -59,12 +59,12 @@ public class GameFinderTest {
                         ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
                 .get(0);
 
-        List<Scraper> mockScrapers = List.of(mockEpicGamesScraper, mockSteamScraper);
+        List<GameScraper> mockGameScrapers = List.of(mockEpicGamesScraper, mockSteamScraper);
 
         // Set the field to accessible
         field.setAccessible(true);
         // Set the scrapers value to be the list of mockedScrapers
-        field.set(gameFinder, mockScrapers);
+        field.set(gameFinder, mockGameScrapers);
         // Set the field to be inaccessible
         field.setAccessible(false);
     }

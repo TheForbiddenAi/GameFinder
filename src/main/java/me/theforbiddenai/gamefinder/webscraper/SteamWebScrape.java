@@ -1,4 +1,4 @@
-package me.theforbiddenai.gamefinder.utilities;
+package me.theforbiddenai.gamefinder.webscraper;
 
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
@@ -58,7 +58,7 @@ public class SteamWebScrape {
                         .cookie("birthtime", "568022401")
                         .get();
             } catch (IOException e) {
-                throw new CompletionException("Unable to web scrape expiration time for ", e);
+                throw new CompletionException("Unable to connect to " + game.getUrl(), e);
             }
         }, CONFIG.getExecutorService()).thenApply(document -> {
             // Parse the document for the expiration epoch and set it in the game object

@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author TheForbiddenAi
  */
-public abstract class Scraper {
+public abstract class GameScraper {
 
     @Getter(AccessLevel.PROTECTED)
     private final ObjectMapper objectMapper;
@@ -23,7 +23,7 @@ public abstract class Scraper {
     @Getter
     private final Platform platform;
 
-    public Scraper(ObjectMapper objectMapper, Platform platform) {
+    public GameScraper(ObjectMapper objectMapper, Platform platform) {
         this.objectMapper = objectMapper;
         this.platform = platform;
     }

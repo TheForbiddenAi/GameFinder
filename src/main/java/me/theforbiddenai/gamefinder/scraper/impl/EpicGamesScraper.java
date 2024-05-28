@@ -8,8 +8,8 @@ import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
-import me.theforbiddenai.gamefinder.scraper.Scraper;
-import me.theforbiddenai.gamefinder.utilities.GraphQLClient;
+import me.theforbiddenai.gamefinder.scraper.GameScraper;
+import me.theforbiddenai.gamefinder.utilities.epicgames.GraphQLClient;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -20,7 +20,7 @@ import java.util.*;
  *
  * @author TheForbiddenAi
  */
-public class EpicGamesScraper extends Scraper {
+public class EpicGamesScraper extends GameScraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 

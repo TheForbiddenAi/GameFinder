@@ -1,9 +1,7 @@
-package me.theforbiddenai.gamefinder.utilities;
+package me.theforbiddenai.gamefinder.utilities.steam;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AccessLevel;
-import lombok.Getter;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 
 import java.io.IOException;
@@ -20,7 +18,6 @@ public class SteamRequests {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
-    @Getter(value = AccessLevel.PROTECTED)
     private final ObjectMapper mapper;
 
     public SteamRequests(ObjectMapper mapper) {

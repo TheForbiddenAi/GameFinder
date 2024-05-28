@@ -5,7 +5,7 @@ package me.theforbiddenai.gamefinder.exception;
  *
  * @author TheForbiddenAi
  */
-public class LocaleException  extends Exception{
+public class LocaleException extends Exception {
 
     public LocaleException(String message) {
         super(message);

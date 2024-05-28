@@ -9,9 +9,9 @@ import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
-import me.theforbiddenai.gamefinder.scraper.Scraper;
-import me.theforbiddenai.gamefinder.utilities.SteamRequests;
-import me.theforbiddenai.gamefinder.utilities.SteamWebScrape;
+import me.theforbiddenai.gamefinder.scraper.GameScraper;
+import me.theforbiddenai.gamefinder.utilities.steam.SteamRequests;
+import me.theforbiddenai.gamefinder.webscraper.SteamWebScrape;
 
 import java.io.IOException;
 import java.util.*;
@@ -21,7 +21,7 @@ import java.util.*;
  *
  * @author TheForbiddenAi
  */
-public class SteamScraper extends Scraper {
+public class SteamScraper extends GameScraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
@@ -32,10 +32,10 @@ public class SteamScraper extends Scraper {
     private final SteamRequests steamRequests;
     private final SteamWebScrape steamWebScrape;
 
-    public SteamScraper(ObjectMapper objectMapper, SteamRequests steamRequests) {
+    public SteamScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.STEAM);
 
-        this.steamRequests = steamRequests;
+        this.steamRequests = new SteamRequests(objectMapper);
         this.steamWebScrape = new SteamWebScrape();
     }
 

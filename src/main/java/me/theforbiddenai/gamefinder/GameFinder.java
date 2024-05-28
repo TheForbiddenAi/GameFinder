@@ -6,10 +6,10 @@ import me.theforbiddenai.gamefinder.callback.GameRetrievalCallback;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
-import me.theforbiddenai.gamefinder.scraper.Scraper;
+import me.theforbiddenai.gamefinder.scraper.GameScraper;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
+import me.theforbiddenai.gamefinder.scraper.impl.GOGScraper;
 import me.theforbiddenai.gamefinder.scraper.impl.SteamScraper;
-import me.theforbiddenai.gamefinder.utilities.SteamRequests;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +28,14 @@ public class GameFinder {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
-    private final List<Scraper> scrapers;
+    private final List<GameScraper> gameScrapers;
 
     public GameFinder() {
-        this.scrapers = new ArrayList<>();
-        SteamRequests steamRequests = new SteamRequests(MAPPER);
+        this.gameScrapers = new ArrayList<>();
 
-        this.scrapers.add(new SteamScraper(MAPPER, steamRequests));
-        this.scrapers.add(new EpicGamesScraper(MAPPER));
+        this.gameScrapers.add(new SteamScraper(MAPPER));
+        this.gameScrapers.add(new EpicGamesScraper(MAPPER));
+        this.gameScrapers.add(new GOGScraper(MAPPER));
     }
 
     /**
@@ -50,10 +50,10 @@ public class GameFinder {
     public List<Game> retrieveGames() throws GameRetrievalException {
         List<ScraperResult> scraperResults = new ArrayList<>();
 
-        for (Scraper scraper : scrapers) {
+        for (GameScraper gameScraper : gameScrapers) {
             // Makes sure that the platform is enabled before retrieving games
-            if (CONFIG.getEnabledPlatforms().contains(scraper.getPlatform())) {
-                scraperResults.addAll(scraper.retrieveResults());
+            if (CONFIG.getEnabledPlatforms().contains(gameScraper.getPlatform())) {
+                scraperResults.addAll(gameScraper.retrieveResults());
             }
         }
 
@@ -92,11 +92,11 @@ public class GameFinder {
             List<CompletableFuture<List<ScraperResult>>> scraperFutures = new ArrayList<>();
 
             // Loop through scrapers
-            for (Scraper scraper : scrapers) {
+            for (GameScraper gameScraper : gameScrapers) {
                 // Makes sure that  the platform is enabled before retrieving games
-                if (CONFIG.getEnabledPlatforms().contains(scraper.getPlatform())) {
+                if (CONFIG.getEnabledPlatforms().contains(gameScraper.getPlatform())) {
                     // Run scraper.retrieveGames async
-                    scraperFutures.add(getGamesFromScraperAsync(scraper));
+                    scraperFutures.add(getGamesFromScraperAsync(gameScraper));
                 }
             }
 
@@ -178,13 +178,13 @@ public class GameFinder {
     /**
      * Wraps a retrieveGames call from a scraper in a CompletableFuture
      *
-     * @param scraper The scraper the games are being retrieved from
+     * @param gameScraper The scraper the games are being retrieved from
      * @return A CompletableFuture containing the retrieve results
      */
-    private CompletableFuture<List<ScraperResult>> getGamesFromScraperAsync(Scraper scraper) {
+    private CompletableFuture<List<ScraperResult>> getGamesFromScraperAsync(GameScraper gameScraper) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return scraper.retrieveResults();
+                return gameScraper.retrieveResults();
             } catch (GameRetrievalException e) {
                 throw new CompletionException(e);
             }

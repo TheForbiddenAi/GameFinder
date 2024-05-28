@@ -1,4 +1,4 @@
-package me.theforbiddenai.gamefinder.utilities;
+package me.theforbiddenai.gamefinder.utilities.epicgames;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

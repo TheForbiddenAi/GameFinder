@@ -8,7 +8,6 @@ import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.impl.SteamScraper;
-import me.theforbiddenai.gamefinder.utilities.SteamRequests;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,8 +60,7 @@ public class SteamScraperTest {
             return answer.callRealMethod();
         });
 
-        SteamRequests mockSteamRequests = new SteamRequests(mockObjectMapper);
-        this.scraper = new SteamScraper(mockObjectMapper, mockSteamRequests);
+        this.scraper = new SteamScraper(mockObjectMapper);
     }
 
     @BeforeEach

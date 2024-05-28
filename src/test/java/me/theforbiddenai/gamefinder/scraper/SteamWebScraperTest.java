@@ -1,7 +1,7 @@
 package me.theforbiddenai.gamefinder.scraper;
 
 import me.theforbiddenai.gamefinder.domain.Game;
-import me.theforbiddenai.gamefinder.utilities.SteamWebScrape;
+import me.theforbiddenai.gamefinder.webscraper.SteamWebScrape;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
