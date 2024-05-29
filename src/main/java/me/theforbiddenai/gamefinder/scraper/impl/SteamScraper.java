@@ -142,16 +142,15 @@ public class SteamScraper extends GameScraper {
     private ScraperResult getResultWithExpirationEpoch(JsonNode itemNode, Game game) {
         long expirationEpoch = extractDiscountEndDate(itemNode);
 
-        // If the expiration epoch is found, or if it isn't and web scraping is enabled set the epoch
-        // and return a ScraperResult with a game object
-        if (expirationEpoch != GameFinderConstants.NO_EXPIRATION_EPOCH || !CONFIG.webScrapeExpirationEpoch()) {
+        // If the expiration epoch is found, set the epoch and return a ScraperResult with a game object
+        if (expirationEpoch != GameFinderConstants.NO_EXPIRATION_EPOCH) {
             game.setExpirationEpoch(expirationEpoch);
             return new ScraperResult(game);
         }
 
         // Use web scraping to find the expiration epoch
         // and return a ScrapperResult with a CompletableFuture<Game> object
-        return new ScraperResult(steamWebScrape.webScrapeExpirationEpoch(game));
+        return new ScraperResult(steamWebScrape.modifyGameAttributes(game));
     }
 
     /**

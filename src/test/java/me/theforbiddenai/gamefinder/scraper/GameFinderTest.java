@@ -54,8 +54,8 @@ public class GameFinderTest {
      * @throws IllegalAccessException If the scraper field is unable to be set
      */
     private void injectMockScrapers() throws IllegalAccessException {
-        // Pull out private scrapers field from GameFinder class
-        Field field = ReflectionUtils.findFields(GameFinder.class, f -> f.getName().equals("scrapers"),
+        // Pull out private gameScrapers field from GameFinder class
+        Field field = ReflectionUtils.findFields(GameFinder.class, f -> f.getName().equals("gameScrapers"),
                         ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
                 .get(0);
 

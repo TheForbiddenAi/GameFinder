@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.domain.Game;
-import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.exception.WebScrapeException;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Scanner;
@@ -18,15 +16,18 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
     private static final String JSON_FIELD_FORMAT = "\"%s\":%s";
     private static final int PRODUCT_CARD_FIELD_COUNT = 3;
 
+    private final ObjectMapper mapper;
+
     public GOGWebScrape(ObjectMapper mapper) {
-        super(mapper, "gog_wantsmaturecontent=9999");
+        super("gog_wantsmaturecontent=9999");
+        this.mapper = mapper;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected void modifyGameAttributes(JsonNode jsonNode, Game game) throws GameRetrievalException, IOException {
+    protected void modifyGameAttributes(JsonNode jsonNode, Game game) throws WebScrapeException {
         System.out.println(jsonNode);
     }
 
@@ -64,7 +65,7 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
         scanner.close();
 
         try {
-            return getMapper().readTree(jsonBuilder.toString());
+            return mapper.readTree(jsonBuilder.toString());
         } catch (JsonProcessingException ex) {
             throw new WebScrapeException("Unable to parse json data for GOG game with url " + url, ex);
         }

@@ -2,75 +2,75 @@ package me.theforbiddenai.gamefinder.scraper;
 
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.webscraper.SteamWebScrape;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.AfterAll;
+import me.theforbiddenai.gamefinder.webscraper.WebScraper;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.MockedStatic;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
+import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SteamWebScraperTest {
 
     private SteamWebScrape webScraper;
 
-    private MockedStatic<Jsoup> mockJsoup;
-
-    @SuppressWarnings("rawtypes")
-    private MockedStatic<CompletableFuture> mockCompletableFuture;
+    private OkHttpClient mockHttpClient;
 
     @BeforeAll
-    public void setupTests() throws IOException {
-        // This must be done before the jsoup mock is initiated
-        Document document = Jsoup.parse(SteamWebScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-app-page-with-discount.html"), "UTF-8", "");
-
+    public void setupTests() throws IOException, IllegalAccessException {
         this.webScraper = new SteamWebScrape();
-        this.mockJsoup = Mockito.mockStatic(Jsoup.class);
+        this.mockHttpClient = mock(OkHttpClient.class);
 
-        Connection mockConnection = mock(Connection.class);
-        // Setup mockConnection
-        when(mockConnection.maxBodySize(Mockito.anyInt())).thenReturn(mockConnection);
-        when(mockConnection.cookie(Mockito.anyString(), Mockito.anyString())).thenReturn(mockConnection);
-        when(mockConnection.get()).thenReturn(document);
+        Call mockCall = mock(Call.class);
+        Response mockResponse = mock(Response.class);
+        ResponseBody mockBody = mock(ResponseBody.class);
 
-        // Intercept CompletableFuture.supplyAsync calls and inject static mock for jsoup
-        this.mockCompletableFuture = mockStatic(CompletableFuture.class, invoker -> {
-            // Continue executing CompletableFuture without inject if supplyAsync isn't called
-            if (!invoker.getMethod().getName().equals("supplyAsync")) return invoker.callRealMethod();
 
-            // Inject static mock inside CompletableFuture
-            this.mockJsoup.when(() -> Jsoup.connect(Mockito.anyString())).thenReturn(mockConnection);
+        when(mockHttpClient.newCall(Mockito.any())).thenReturn(mockCall);
+        when(mockCall.execute()).thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(mockBody);
+        when(mockBody.byteStream()).thenReturn(SteamWebScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-app-page-with-discount.html"));
 
-            // Continue executing completableFuture
-            Supplier<?> supplier = invoker.getArgument(0);
-            return CompletableFuture.completedFuture(supplier.get());
-        });
-
+        injectMockHttpClient();
     }
 
-    @AfterAll
-    public void closeStaticMocks() {
-        this.mockJsoup.close();
-        this.mockCompletableFuture.close();
+    /**
+     * Injects the mockHttpClient objects into the httpClient field of a WebScraper class
+     *
+     * @throws IllegalAccessException If the httpClient field is unable to be set
+     */
+    private void injectMockHttpClient() throws IllegalAccessException {
+        // Pull out private httpClient field from WebScraper class
+        Field field = ReflectionUtils.findFields(WebScraper.class, f -> f.getName().equals("httpClient"),
+                        ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
+                .get(0);
+
+        // Set the field to accessible
+        field.setAccessible(true);
+        // Set the httpClient value to be the mockHttpClient
+        field.set(this.webScraper, this.mockHttpClient);
+        // Set the field to be inaccessible
+        field.setAccessible(false);
     }
 
     @Test
     public void testWebScrapeExpirationEpoch() {
         Game game = Game.builder()
-                .url("")
+                .url("https://store.steampowered.com/")
                 .build();
 
-        this.webScraper.webScrapeExpirationEpoch(game).join();
+        this.webScraper.modifyGameAttributes(game).join();
         assertEquals(1715878800L, game.getExpirationEpoch());
     }
 

@@ -1,11 +1,7 @@
 package me.theforbiddenai.gamefinder.webscraper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AccessLevel;
-import lombok.Getter;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.domain.Game;
-import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.exception.WebScrapeException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -15,7 +11,6 @@ import okhttp3.ResponseBody;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,15 +27,13 @@ public abstract class WebScraper<T> {
     private final String cookies;
     private final OkHttpClient httpClient;
 
-    @Getter(AccessLevel.PROTECTED)
-    private final ObjectMapper mapper;
 
-
-    public WebScraper(ObjectMapper mapper, String cookies) {
-        this.mapper = mapper;
+    public WebScraper(String cookies) {
         this.cookies = cookies;
         this.httpClient = new OkHttpClient();
     }
+
+    // TODO: Caching system?
 
     /**
      * Web scrapes the remaining data for a game object. The data being web scraped depends on the implementation of
@@ -52,11 +45,7 @@ public abstract class WebScraper<T> {
     public CompletableFuture<Game> modifyGameAttributes(Game game) {
         return CompletableFuture.supplyAsync(() -> getHTMLData(game.getUrl()), CONFIG.getExecutorService())
                 .thenApply(html -> {
-                    try {
-                        modifyGameAttributes(html, game);
-                    } catch (GameRetrievalException | IOException e) {
-                        throw new CompletionException(e);
-                    }
+                    modifyGameAttributes(html, game);
                     return game;
                 }).orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
@@ -66,10 +55,9 @@ public abstract class WebScraper<T> {
      *
      * @param t    The data object containing the data required to complete a game object
      * @param game The game object being updated
-     * @throws GameRetrievalException If there is some error updating the game
-     * @throws IOException            If there is some issue parsing the html
+     * @throws WebScrapeException If there is some error updating the game
      */
-    protected abstract void modifyGameAttributes(T t, Game game) throws GameRetrievalException, IOException;
+    protected abstract void modifyGameAttributes(T t, Game game) throws WebScrapeException;
 
     /**
      * Retrieves the data needed to complete a game object from the HTML of a game page

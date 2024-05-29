@@ -30,10 +30,6 @@ public class GameFinderConfiguration {
     @Accessors(fluent = true)
     private boolean includeDLCs = true;
 
-    // When true, this will web scrape discount's end time on steam if it is unable to be retrieved any other way
-    @Accessors(fluent = true)
-    private boolean webScrapeExpirationEpoch = true;
-
     @Accessors(fluent = true)
     private boolean allowSteamMatureContentScreenshots = true;
 
