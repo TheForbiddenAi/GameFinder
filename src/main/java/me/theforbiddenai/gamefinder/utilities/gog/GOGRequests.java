@@ -37,10 +37,10 @@ public class GOGRequests {
 
         String catalogURL = "https://catalog.gog.com/v1/catalog" +
                 getLocaleURLParameters() +
+                // TODO: Remove when done testing
                 "&limit=1" +
                 // TODO: Uncomment this line when done testing
                 // "&price=between:0,0" +
-                "&order=desc:trending" +
                 "&discounted=eq:true" +
                 "&productType=in:" + productTypes +
                 "&page=1";

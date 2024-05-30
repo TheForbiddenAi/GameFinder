@@ -102,18 +102,14 @@ public class EpicGamesScraper extends GameScraper {
         // Filter out all listings that do not have a 100% discount
         if (discount != 0) return Optional.empty();
 
-        // Retrieves the formatted price and strips all spaces from it
-        String originalPrice = Optional.ofNullable(totalPrice.get("fmtPrice"))
-                .map(node -> node.get("originalPrice"))
-                .map(node -> node.asText(""))
-                .orElse("")
-                .replaceAll("\\s+", "");
+        int priceNoDecimal = totalPrice.get("originalPrice").asInt();
+        int decimalCount = totalPrice.get("currencyInfo").get("decimals").asInt();
 
         Game.GameBuilder gameBuilder = Game.builder()
                 .title(gameJson.get("title").asText())
                 .description(gameJson.get("description").asText())
                 .url(getGameUrl(gameJson, isDLC))
-                .originalPrice(originalPrice)
+                .originalPrice(priceNoDecimal, decimalCount)
                 .isDLC(isDLC)
                 .platform(Platform.EPIC_GAMES)
                 .expirationEpoch(getOfferExpirationEpoch(priceJson));
@@ -123,8 +119,6 @@ public class EpicGamesScraper extends GameScraper {
 
         return Optional.ofNullable(gameBuilder.build());
     }
-
-    //https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale={self.locale}&country={self.country}&allowCountries={allow_countries}
 
     /**
      * Retrieves store media and game media and adds it to the game builder

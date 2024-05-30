@@ -5,16 +5,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.exception.WebScrapeException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Safelist;
 
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class GOGWebScrape extends WebScraper<JsonNode> {
 
     private static final String JSON_FIELD_FORMAT = "\"%s\":%s";
     private static final int PRODUCT_CARD_FIELD_COUNT = 3;
+
+    private static final Pattern THREE_OR_MORE_NEWLINES_REGEX = Pattern.compile("(\\n(\\s+)?){3,}");
 
     private final ObjectMapper mapper;
 
@@ -28,7 +35,19 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
      */
     @Override
     protected void modifyGameAttributes(JsonNode jsonNode, Game game) throws WebScrapeException {
-        System.out.println(jsonNode);
+        JsonNode cardProductNode = jsonNode.get("cardProduct");
+        JsonNode promoNode = jsonNode.get("cardProductPromoEndDate");
+        String currencyCode = jsonNode.get("currency").asText();
+
+        // Get baseAmount from cardProduct.price json if it exists
+        Optional<Double> baseAmountOptional = Optional.ofNullable(cardProductNode.get("price"))
+                .map(node -> node.get("baseAmount"))
+                .map(JsonNode::asDouble);
+
+        // If baseAmount exists, parse it.
+        baseAmountOptional.ifPresent(baseAmount -> game.setOriginalPrice(baseAmount, currencyCode));
+
+        game.setDescription(getDescription(cardProductNode));
     }
 
     /**
@@ -43,7 +62,7 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
 
         // Loop through the HTML lines
         while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
+            String line = scanner.nextLine().stripLeading();
 
             String jsonField = getJsonField(line, foundFields);
             if (jsonField == null) continue;
@@ -58,17 +77,33 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
             throw new WebScrapeException("Unable to retrieve all required product card data for GOG game with url " + url);
         }
 
+        scanner.close();
+
         // Remove hanging comma and add closing curly brace
         jsonBuilder.deleteCharAt(jsonBuilder.length() - 1);
-        jsonBuilder.append("}");
 
-        scanner.close();
+        jsonBuilder.append("}");
 
         try {
             return mapper.readTree(jsonBuilder.toString());
         } catch (JsonProcessingException ex) {
             throw new WebScrapeException("Unable to parse json data for GOG game with url " + url, ex);
         }
+    }
+
+    private String getDescription(JsonNode cardProductNode) {
+        String descriptionHTML = cardProductNode.get("description").asText();
+        Document descDocument = Jsoup.parse(descriptionHTML);
+
+        // Any paragraph element with the module class is a disclaimer from GOG and is not part of the description
+        descDocument.select("p.module").remove();
+
+        // This strips all HTML tags from the description, keeps the original formatting, and strips leading/trailing whitespace
+        Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
+        String descString = Jsoup.clean(descDocument.html(), "", Safelist.none(), outputSettings).strip();
+
+        // This regex pattern removes restricts the number of sequential newlines to two
+        return THREE_OR_MORE_NEWLINES_REGEX.matcher(descString).replaceAll("\n\n");
     }
 
 

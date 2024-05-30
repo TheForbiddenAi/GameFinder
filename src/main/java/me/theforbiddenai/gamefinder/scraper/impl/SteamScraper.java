@@ -28,6 +28,7 @@ public class SteamScraper extends GameScraper {
     private static final String STEAM_STORE_URL = "https://store.steampowered.com/";
     private static final String STEAM_CDN_URL = "https://cdn.cloudflare.steamstatic.com/";
 
+    private static final int CURRENCY_DECIMAL_COUNT = 2;
 
     private final SteamRequests steamRequests;
     private final SteamWebScrape steamWebScrape;
@@ -109,26 +110,24 @@ public class SteamScraper extends GameScraper {
                 .map(JsonNode::asText)
                 .orElse("N/A");
 
-        // Retrieves the formatted price and strips all spaces from it
-        String originalPrice = Optional.ofNullable(itemNode.get("best_purchase_option"))
-                .map(node -> node.get("formatted_original_price"))
-                .map(node -> node.asText(""))
-                .orElse("")
-                .replaceAll("\\s+", "");
+        Optional<Integer> priceNoDecimalOptional = Optional.ofNullable(itemNode.get("best_purchase_option"))
+                .map(node -> node.get("original_price_in_cents"))
+                .map(JsonNode::asInt);
 
         // Build game from information available in itemNode
-        Game game = Game.builder()
+        Game.GameBuilder gameBuilder = Game.builder()
                 .title(itemNode.get("name").asText())
                 .description(description)
                 .url(gameUrl)
-                .originalPrice(originalPrice)
                 .isDLC(isDLC)
                 .platform(Platform.STEAM)
                 .storeMedia(getStoreMedia(itemNode))
-                .media(getScreenshots(itemNode))
-                .build();
+                .media(getScreenshots(itemNode));
 
-        return getResultWithExpirationEpoch(itemNode, game);
+        // If priceNoDecimal exists format the price and set it
+        priceNoDecimalOptional.ifPresent(price -> gameBuilder.originalPrice(price, CURRENCY_DECIMAL_COUNT));
+
+        return getResultWithExpirationEpoch(itemNode, gameBuilder.build());
     }
 
     /**
@@ -170,13 +169,11 @@ public class SteamScraper extends GameScraper {
         if (activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Get the original price in cents. If it doesn't exist or is blank, return GameFinderConstants.NO_EXPIRATION_EPOCH
-        long originalPriceInCents = Optional.ofNullable(bestPurchaseOption.get("original_price_in_cents"))
-                .map(JsonNode::asLong)
-                .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+        Optional<Integer> originalPriceInCents = Optional.ofNullable(bestPurchaseOption.get("original_price_in_cents"))
+                .map(JsonNode::asInt);
 
         // Validate there is a price
-        if (originalPriceInCents == GameFinderConstants.NO_EXPIRATION_EPOCH)
-            return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        if (originalPriceInCents.isEmpty()) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Loop through active discounts (unsure if it's possible for there to be more than one)
         for (JsonNode activeDiscount : activeDiscounts) {
@@ -187,13 +184,12 @@ public class SteamScraper extends GameScraper {
 
             // Ensure that this is the correct discount by verifying that it is 100% off
             // by comparing the discountAmount to the originalPriceInCents
-            if (discountAmount == originalPriceInCents) {
+            if (discountAmount == originalPriceInCents.get()) {
                 // Get the expirationEpoch if it exists, otherwise return GameFinderConstants.NO_EXPIRATION_EPOCH;
-                long expirationEpoch = Optional.ofNullable(activeDiscount.get("discount_end_date"))
-                        .map(JsonNode::asLong)
-                        .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+                Optional<Long> expirationEpoch = Optional.ofNullable(activeDiscount.get("discount_end_date"))
+                        .map(JsonNode::asLong);
                 // Return the found expirationEpoch only if it is not GameFinderConstants.NO_EXPIRATION_EPOCH
-                if (expirationEpoch != GameFinderConstants.NO_EXPIRATION_EPOCH) return expirationEpoch;
+                if (expirationEpoch.isPresent()) return expirationEpoch.get();
             }
         }
 

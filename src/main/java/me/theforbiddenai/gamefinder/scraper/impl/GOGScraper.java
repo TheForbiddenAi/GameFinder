@@ -2,7 +2,6 @@ package me.theforbiddenai.gamefinder.scraper.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.NonNull;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
@@ -10,71 +9,43 @@ import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.GameScraper;
 import me.theforbiddenai.gamefinder.utilities.gog.GOGRequests;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
+import me.theforbiddenai.gamefinder.webscraper.GOGWebScrape;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class GOGScraper extends GameScraper {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
-    private static final Pattern CARD_PRODUCT_PATTERN = Pattern.compile("cardProduct: (\\{.*})");
-    private static final Pattern CARD_PROMO_END_PATTERN = Pattern.compile("window\\.productcardData\\.cardProductPromoEndDate = (\\{.*})");
-
     // First %s is for language, second %s is for the game slug
     private static final String GOG_GAME_URL_FORMAT = "https://www.gog.com/%s/game/%s";
 
-    private final OkHttpClient httpClient;
     private final GOGRequests gogRequests;
+    private final GOGWebScrape webScrape;
 
     public GOGScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.GOG);
 
-        this.httpClient = new OkHttpClient();
+        this.webScrape = new GOGWebScrape(objectMapper);
         this.gogRequests = new GOGRequests(objectMapper);
     }
 
     @Override
     public List<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
-            // System.out.println(retrieveGameList());
-//            JsonNode gameListNode = retrieveGameList();
-//            for (JsonNode gameNode : gameListNode) {
-//                retrieveGameFromGOG(gameNode);//.join();
-//            }
+            Optional<JsonNode> gameListNode = gogRequests.getGameList();
 
-            // TODO: REMOVE THIS
-            gogRequests.getHomePageSections().ifPresent(node -> {
-                for (JsonNode sectionNode : node) {
-                    if(!sectionNode.get("sectionType").asText().equals("GIVEAWAY_SECTION")) continue;
-
-                    try {
-                        gogRequests.getHomePageSection(sectionNode.get("sectionId").asText()).ifPresent(nod2 -> {
-                            try {
-                                System.out.println(retrieveGameFromGOG(nod2.get("product")).join());
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            } catch (GameRetrievalException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                }
-            });
+            /*
+             * Check homepages for GIVEAWAY_SECTION
+             * If exists, extract the game
+             *
+             * Then check game list
+             * Combine into one list (make sure no duplicates, utilize id map or smth)
+             * Get as many details as can from given objects
+             * Web scrape the rest
+             */
 
 
         } catch (IOException ex) {
@@ -83,103 +54,35 @@ public class GOGScraper extends GameScraper {
         return List.of();
     }
 
-    private CompletableFuture<Game> retrieveGameFromGOG(JsonNode gameListNode) throws IOException, GameRetrievalException {
-        return CompletableFuture.supplyAsync(() -> {
-            String productType = gameListNode.get("productType").asText();
-            boolean isDLC = productType.equalsIgnoreCase("dlc") || productType.equalsIgnoreCase("extra");
+    private CompletableFuture<Game> retrieveGameFromGOG(JsonNode gameListNode) {
 
-            // Pull formatted original price string out
-            String originalPrice = Optional.ofNullable(gameListNode.get("price"))
-                    .map(node -> node.get("base"))
-                    .map(node -> node.asText(""))
-                    .orElse("");
-            System.out.println(gameListNode);
+        String productType = gameListNode.get("productType")
+                .asText()
+                .toLowerCase();
 
-            Map<String, String> storeMedia = new HashMap<>();
-            storeMedia.put("coverHorizontal", gameListNode.get("coverHorizontal").asText());
-            storeMedia.put("coverVertical", gameListNode.get("coverVertical").asText());
+        boolean isDLC = productType.equals("dlc") || productType.equals("extra");
 
-            // I use slug instead of storeLink because the giveaway object does not contain a storeLink object
-            String urlSlug = gameListNode.get("slug").asText();
-            String url = String.format(GOG_GAME_URL_FORMAT, CONFIG.getLocale().getLanguage(), urlSlug);
-            try {
-                JsonNode productCardData = getProductCardData(url);
+        // Make sure that DLCs are enabled before continuing on with DLC object parsing
+        if (!CONFIG.includeDLCs() && isDLC) return null;
 
-               // JsonNode cardProductNode = productCardData.get("cardProduct");
+        Map<String, String> storeMedia = new HashMap<>();
+        storeMedia.put("coverHorizontal", gameListNode.get("coverHorizontal").asText());
+        storeMedia.put("coverVertical", gameListNode.get("coverVertical").asText());
 
-                Game.GameBuilder gameBuilder = Game.builder()
-                        .title(gameListNode.get("title").asText())
-                       // .description(getDescription(cardProductNode))
-                        .url(url)
-                        .isDLC(isDLC)
-                        .originalPrice(originalPrice)
-                        .storeMedia(storeMedia)
-                        .media(getScreenshots(gameListNode))
-                        .platform(Platform.GOG);
+        // I use slug instead of storeLink because the giveaway object does not contain a storeLink object
+        String urlSlug = gameListNode.get("slug").asText();
+        String url = String.format(GOG_GAME_URL_FORMAT, CONFIG.getLocale().getLanguage(), urlSlug);
 
-                return gameBuilder.build();
-            } catch (IOException | GameRetrievalException e) {
-                throw new RuntimeException(e);
-            }
-
-        }, CONFIG.getExecutorService());
-    }
-
-    private String getDescription(JsonNode cardProductNode) {
-        String descriptionHTML = cardProductNode.get("description").asText();
-        Document descDocument = Jsoup.parse(descriptionHTML);
-
-        // Any paragraph element with the module class is a disclaimer from GOG and is not part of the description
-        descDocument.select("p.module").remove();
-
-        // This strips all HTML tags from the description, keeps the original formatting, and strips leading/trailing whitespace
-        Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
-        String descString = Jsoup.clean(descDocument.html(), "", Safelist.none(), outputSettings).strip();
-
-        // This regex pattern removes restricts the number of sequential newlines to two
-        return descString.replaceAll("(\\n(\\s+)?){3,}", "\n\n");
-    }
-
-    /**
-     * Gets the productCard data for a GOG game
-     *
-     * @param url The URL to the GOG game page
-     * @return A JsonNode containing all the productCard data
-     * @throws IOException            If the URL is malformed or if the object mapper is unable to parse the retrieved json
-     * @throws GameRetrievalException If the necessary data is not found
-     */
-    private JsonNode getProductCardData(@NonNull String url) throws IOException, GameRetrievalException {
-        Request request = new Request.Builder()
+        Game game = Game.builder()
+                .title(gameListNode.get("title").asText())
                 .url(url)
-                .header("Accept", "application/javascript")
+                .isDLC(isDLC)
+                .storeMedia(storeMedia)
+                .media(getScreenshots(gameListNode))
+                .platform(Platform.GOG)
                 .build();
 
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new GameRetrievalException("Unable to connect to GOG game with URL " + url);
-
-            ResponseBody body = response.body();
-            if (body == null)
-                throw new GameRetrievalException("Unable to retrieve response body for GOG game with URL " + url);
-
-            String bodyString = body.string();
-
-            Matcher cardProductMatcher = CARD_PRODUCT_PATTERN.matcher(bodyString);
-            Matcher cardPromoEndMatcher = CARD_PROMO_END_PATTERN.matcher(bodyString);
-            // Make sure that all data exists in the string
-            if (!cardProductMatcher.find())
-                throw new GameRetrievalException("Unable to retrieve cardProductData for GOG Game with URL " + url);
-            if (!cardPromoEndMatcher.find())
-                throw new GameRetrievalException("Unable to retrieve cardProductPromoEndDate for GOG Game with URL " + url);
-
-            // Put data in json format
-            String stringJson = "{" + "\"cardProduct\":" +
-                    cardProductMatcher.group(1) +
-                    ",\"cardProductPromoEndDate\":" +
-                    cardPromoEndMatcher.group(1) + "}";
-
-            return getObjectMapper().readTree(stringJson);
-        }
+        return webScrape.modifyGameAttributes(game);
     }
 
     /**
@@ -202,33 +105,6 @@ public class GOGScraper extends GameScraper {
         }
 
         return screenshotList;
-    }
-
-    /**
-     * Retrieves a list of all games with a 100% discount on GOG
-     *
-     * @return The JsonNode containing the game information
-     * @throws IOException If the object mapper is unable to parse the retrieved data
-     */
-    private JsonNode retrieveGameList() throws IOException {
-        String productTypes = "game,pack";
-        productTypes = CONFIG.includeDLCs() ? productTypes + ",dlc,extras" : productTypes;
-
-        Locale locale = CONFIG.getLocale();
-        Currency currency = Currency.getInstance(locale);
-
-        String catalogURL = "https://catalog.gog.com/v1/catalog?limit=1" +
-                // "&price=between:0,0" +
-                "&order=desc:trending" +
-                "&discounted=eq:true" +
-                "&productType=in:" + productTypes +
-                "&page=1" +
-                "&countryCode=" + locale.getCountry() +
-                "&locale=" + locale +
-                "&currencyCode=" + currency.getCurrencyCode();
-        return Optional.of(getObjectMapper().readTree(new URL(catalogURL)))
-                .map(node -> node.get("products"))
-                .orElse(null);
     }
 
 }
