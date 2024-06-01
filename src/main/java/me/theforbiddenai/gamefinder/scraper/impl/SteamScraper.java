@@ -175,29 +175,29 @@ public class SteamScraper extends GameScraper {
 
         if (activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
-        // Get the original price in cents. If it doesn't exist or is blank, return GameFinderConstants.NO_EXPIRATION_EPOCH
-        Optional<Integer> originalPriceInCents = Optional.ofNullable(bestPurchaseOption.get("original_price_in_cents"))
-                .map(JsonNode::asInt);
-
         // Validate there is a price
-        if (originalPriceInCents.isEmpty()) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        if (!bestPurchaseOption.has("original_price_in_cents")) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+        // Get the original price in cents.
+        int originalPriceInCents = bestPurchaseOption.get("original_price_in_cents").asInt();
 
         // Loop through active discounts (unsure if it's possible for there to be more than one)
         for (JsonNode activeDiscount : activeDiscounts) {
+            // Validate there is a discount
+            if (!activeDiscount.has("discount_amount")) continue;
+
             // Get discount amount
-            long discountAmount = Optional.ofNullable(activeDiscount.get("discount_amount"))
-                    .map(JsonNode::asLong)
-                    .orElse(GameFinderConstants.NO_EXPIRATION_EPOCH);
+            int discountAmount = activeDiscount.get("discount_amount").asInt();
 
             // Ensure that this is the correct discount by verifying that it is 100% off
             // by comparing the discountAmount to the originalPriceInCents
-            if (discountAmount == originalPriceInCents.get()) {
-                // Get the expirationEpoch if it exists, otherwise return GameFinderConstants.NO_EXPIRATION_EPOCH;
-                Optional<Long> expirationEpoch = Optional.ofNullable(activeDiscount.get("discount_end_date"))
-                        .map(JsonNode::asLong);
-                // Return the found expirationEpoch only if it is not GameFinderConstants.NO_EXPIRATION_EPOCH
-                if (expirationEpoch.isPresent()) return expirationEpoch.get();
+            if (discountAmount != originalPriceInCents) continue;
+
+            // Return the expirationEpoch if found
+            if (activeDiscount.has("discount_end_date")) {
+                return activeDiscount.get("discount_end_date").asLong();
             }
+
         }
 
         // No epoch found

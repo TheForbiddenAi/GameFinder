@@ -118,13 +118,15 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
      * @param jsonField       The name of the json field
      */
     private void insertStoreMediaEntry(Map<String, String> storeMedia, JsonNode cardProductNode, String jsonField) {
-        // Get the value of the field, if it exists and the value is not blank, add it to the storeMedia map
-        Optional.ofNullable(cardProductNode.get(jsonField))
-                .map(JsonNode::asText)
-                .ifPresent(url -> {
-                    if (url.isBlank()) return;
-                    storeMedia.put(jsonField, url);
-                });
+        // Make sure the field exists
+        if(!cardProductNode.has(jsonField)) return;
+
+        // Get the url (default to blank string if null)
+        String url = cardProductNode.get(jsonField).asText("");
+
+        // Add to map if the url is not null
+        if (url.isBlank()) return;
+        storeMedia.put(jsonField, url);
     }
 
     /**

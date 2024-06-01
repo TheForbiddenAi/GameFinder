@@ -57,14 +57,14 @@ public class EpicGamesScraper extends GameScraper {
                 // Loop through jNode elements,
                 for (JsonNode gameJson : jNode) {
                     // Convert each element to a game object using jsonToGame,
-                    Optional<Game> optionalGame = jsonToGame(gameJson);
+                    Game game = jsonToGame(gameJson);
+
                     // Returned game is not 100%, break the for loop
-                    if (optionalGame.isEmpty()) {
+                    if (game == null) {
                         shouldContinue = false;
                         break;
                     }
 
-                    Game game = optionalGame.get();
                     start++;
 
                     // This shouldn't happen due to the way the information is requested from the GraphQL API.
@@ -86,11 +86,11 @@ public class EpicGamesScraper extends GameScraper {
      * Converts a JsonNode object to a game object
      *
      * @param gameJson The JsonNode object containing data about a game listing
-     * @return An optional containing the game object, or an empty optional if:
+     * @return A game object, or null if:
      *         the found listing is not a game and includeDLCs is disabled in {@link GameFinderConfiguration}
      *         or there is no discount applied
      */
-    private Optional<Game> jsonToGame(JsonNode gameJson) {
+    private Game jsonToGame(JsonNode gameJson) {
         String offerType = gameJson.get("offerType").asText();
         boolean isDLC = offerType.equalsIgnoreCase("DLC") || offerType.equalsIgnoreCase("ADD_ON");
 
@@ -100,7 +100,7 @@ public class EpicGamesScraper extends GameScraper {
         int discount = totalPrice.get("discountPrice").asInt();
 
         // Filter out all listings that do not have a 100% discount
-        if (discount != 0) return Optional.empty();
+        if (discount != 0) return null;
 
         int priceNoDecimal = totalPrice.get("originalPrice").asInt();
         int decimalCount = totalPrice.get("currencyInfo").get("decimals").asInt();
@@ -117,7 +117,7 @@ public class EpicGamesScraper extends GameScraper {
         // Add image data
         setGameMedia(gameJson, gameBuilder);
 
-        return Optional.ofNullable(gameBuilder.build());
+        return gameBuilder.build();
     }
 
     /**
@@ -202,14 +202,13 @@ public class EpicGamesScraper extends GameScraper {
             // Loop through the rules
             for (JsonNode rule : appliedRules) {
                 // Get the discountPercentage
-                int discountPercentage = Optional.ofNullable(rule.get("discountSetting"))
+                Optional<Integer> discountPercentage = Optional.ofNullable(rule.get("discountSetting"))
                         .map(node -> node.get("discountPercentage"))
-                        .map(JsonNode::asInt)
-                        .orElse((int) GameFinderConstants.NO_EXPIRATION_EPOCH);
+                        .map(JsonNode::asInt);
 
                 // 0 == 100% discount
-                // If the discountPercentage is 0, return the endDate of the current appliedRule
-                if (discountPercentage != 0) continue;
+                // If the discountPercentage isn't there or is not 0 then it is not the right discount, continue
+                if (discountPercentage.isEmpty() || discountPercentage.get() != 0) continue;
                 String endDate = rule.get("endDate").asText();
 
                 // Return GameFinderConstants.NO_EXPIRATION_EPOCH if not found or end date epoch

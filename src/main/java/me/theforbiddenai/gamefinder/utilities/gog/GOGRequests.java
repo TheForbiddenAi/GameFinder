@@ -37,10 +37,7 @@ public class GOGRequests {
 
         String catalogURL = "https://catalog.gog.com/v1/catalog" +
                 getLocaleURLParameters() +
-                // TODO: Remove when done testing
-                "&limit=1" +
-                // TODO: Uncomment this line when done testing
-                // "&price=between:0,0" +
+                "&price=between:0,0" +
                 "&discounted=eq:true" +
                 "&productType=in:" + productTypes +
                 "&page=1";
@@ -77,19 +74,6 @@ public class GOGRequests {
                 getLocaleURLParameters();
         return Optional.of(mapper.readTree(new URL(url)))
                 .map(node -> node.get("properties"));
-    }
-
-    /**
-     * Gets the json data for a game listing (does NOT contain discount end time)
-     *
-     * @param gameId The id of the game
-     * @return THe json data if found
-     * @throws IOException If the URL is malformed or if the mapper is unable to parse the json data
-     */
-    public Optional<JsonNode> getGame(String gameId) throws IOException {
-        String url = "https://api.gog.com/v2/games/" + gameId +
-                getLocaleURLParameters();
-        return Optional.of(mapper.readTree(new URL(url)));
     }
 
     /**
