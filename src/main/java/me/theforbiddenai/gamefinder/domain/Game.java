@@ -65,11 +65,6 @@ public class Game {
 
         private String originalPrice = "N/A";
 
-        public GameBuilder originalPrice(double originalPrice, String currencyCode) {
-            this.originalPrice = _setOriginalPrice(originalPrice, currencyCode);
-            return this;
-        }
-
         public GameBuilder originalPrice(double originalPrice) {
             Currency currency = Currency.getInstance(GameFinderConfiguration.getInstance().getLocale());
             this.originalPrice = _setOriginalPrice(originalPrice, currency.getCurrencyCode());

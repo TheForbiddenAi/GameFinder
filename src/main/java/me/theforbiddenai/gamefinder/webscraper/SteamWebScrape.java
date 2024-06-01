@@ -26,7 +26,7 @@ public class SteamWebScrape extends WebScraper<Long> {
 
     // DateTimeFormatter for dates like May 10 @ 1:00PM
     private static final DateTimeFormatter STEAM_DATE_FORMAT = new DateTimeFormatterBuilder()
-            .appendPattern("MMM dd @ h:mma")
+            .appendPattern("MMM d @ h:mma")
             .parseDefaulting(ChronoField.YEAR, Year.now().getValue())
             .toFormatter();
 
@@ -72,8 +72,6 @@ public class SteamWebScrape extends WebScraper<Long> {
             return LocalDateTime.parse(expirationDate, STEAM_DATE_FORMAT)
                     // By default, Steam will give a date in PST
                     .atZone(ZoneId.of("America/Los_Angeles"))
-                    // Convert timezone to the system default
-                    .withZoneSameInstant(ZoneId.systemDefault())
                     .toInstant()
                     .getEpochSecond();
         }

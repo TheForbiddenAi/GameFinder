@@ -17,6 +17,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 
+/**
+ * Responsible for game information from a GOG game page
+ *
+ * @author TheForbiddenAi
+ */
 public class GOGWebScrape extends WebScraper<JsonNode> {
 
     private static final String JSON_FIELD_FORMAT = "\"%s\":%s";
@@ -25,7 +30,7 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
 
     // This set contains the names of the json fields that should be added to the storeMedia map in a game object
-    private static final Set<String> STORE_MEDIA_FIELDS = Set.of(
+    private static final List<String> STORE_MEDIA_FIELDS = List.of(
             "backgroundImage",
             "boxArtImage",
             "galaxyBackgroundImage",

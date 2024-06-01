@@ -84,11 +84,18 @@ public class SteamScraper extends GameScraper {
      * @return A ScrapperResult containing the game or a future game, or null if the game is not free
      */
     private ScraperResult convertItemNodeToScrapperResult(JsonNode itemNode) {
-        // I could technically check using itemNode.get("is_free_temporarily")
-        // However, I do not trust that it will appear everytime. I know this will always be there
+        /*
+        I do not use the is_free_temporarily field because it does not account for scenarios where it is not possible
+        to buy the item individually. It may be 100% off but the page that you would be directed to will still show it at full price.
+
+        An example of this is Tell Me Why. Tell Me Why is the base game and its DLCs (Chapter 2 and Chapter 3) are bundled together.
+        It is not possible to buy them individually. When Tell Me Why goes free, Chapter 2 and Chapter 3 also go free. However, to
+        get the discount you MUST buy it from Tell Me Why's page. Going to the page for Chapter 2 or Chapter 3 will show the bundle
+        as it's full price. https://i.imgur.com/xgQYwqW.png
+         */
         boolean isFree = Optional.ofNullable(itemNode.get("best_purchase_option"))
                 .map(node -> node.get("discount_pct"))
-                .map(node -> node.asInt(0))
+                .map(JsonNode::asInt)
                 .orElse(0) == 100;
 
         if (!isFree) return null;
