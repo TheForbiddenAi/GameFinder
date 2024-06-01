@@ -3,6 +3,7 @@ package me.theforbiddenai.gamefinder.webscraper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.exception.WebScrapeException;
 import org.jsoup.Jsoup;
@@ -10,16 +11,26 @@ import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Scanner;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class GOGWebScrape extends WebScraper<JsonNode> {
 
     private static final String JSON_FIELD_FORMAT = "\"%s\":%s";
     private static final int PRODUCT_CARD_FIELD_COUNT = 3;
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+
+    // This set contains the names of the json fields that should be added to the storeMedia map in a game object
+    private static final Set<String> STORE_MEDIA_FIELDS = Set.of(
+            "backgroundImage",
+            "boxArtImage",
+            "galaxyBackgroundImage",
+            "logo"
+    );
 
     private static final Pattern THREE_OR_MORE_NEWLINES_REGEX = Pattern.compile("(\\n(\\s+)?){3,}");
 
@@ -48,6 +59,9 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
         baseAmountOptional.ifPresent(baseAmount -> game.setOriginalPrice(baseAmount, currencyCode));
 
         game.setDescription(getDescription(cardProductNode));
+        game.setExpirationEpoch(getExpirationEpoch(promoNode));
+
+        STORE_MEDIA_FIELDS.forEach(field -> insertStoreMediaEntry(game.getStoreMedia(), cardProductNode, field));
     }
 
     /**
@@ -91,8 +105,62 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
         }
     }
 
+    /**
+     * Adds a given field, and it's value, to the storeMedia map if it exists
+     *
+     * @param storeMedia      The storeMedia map
+     * @param cardProductNode The JsonNode containing the jsonField
+     * @param jsonField       The name of the json field
+     */
+    private void insertStoreMediaEntry(Map<String, String> storeMedia, JsonNode cardProductNode, String jsonField) {
+        // Get the value of the field, if it exists and the value is not blank, add it to the storeMedia map
+        Optional.ofNullable(cardProductNode.get(jsonField))
+                .map(JsonNode::asText)
+                .ifPresent(url -> {
+                    if (url.isBlank()) return;
+                    storeMedia.put(jsonField, url);
+                });
+    }
+
+    /**
+     * Gets the expiration epoch for a discount
+     *
+     * @param promoNode The JsonNode that contains the promotion end date information
+     * @return The expiration epoch if found otherwise GameFinderConstants.NO_EXPIRATION_EPOCH
+     */
+    private long getExpirationEpoch(JsonNode promoNode) {
+        // Get the date string (in form: yyyy-MM-dd HH:mm:ss.SSSSSS)
+        Optional<String> dateStr = Optional.of(promoNode.get("date"))
+                .map(JsonNode::asText);
+
+        // Get the timezone (either a UTC offset, timezone abbreviation, or timezone identifier)
+        Optional<String> timezone = Optional.of(promoNode.get("timezone"))
+                .map(JsonNode::asText);
+
+        if (dateStr.isEmpty() || timezone.isEmpty()) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+
+        try {
+            // Parse the dateStr, set the timezone, and then pull out the epoch second
+            return LocalDateTime.parse(dateStr.get(), DATE_TIME_FORMATTER)
+                    .atZone(ZoneId.of(timezone.get()))
+                    .toInstant()
+                    .getEpochSecond();
+        } catch (Exception ex) {
+            return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        }
+    }
+
+    /**
+     * Gets the description of a game
+     *
+     * @param cardProductNode The JsonNode that contains the game information
+     * @return The game's description
+     */
     private String getDescription(JsonNode cardProductNode) {
-        String descriptionHTML = cardProductNode.get("description").asText();
+        String descriptionHTML = Optional.ofNullable(cardProductNode.get("description"))
+                .map(JsonNode::asText)
+                .orElse("N/A");
+
         Document descDocument = Jsoup.parse(descriptionHTML);
 
         // Any paragraph element with the module class is a disclaimer from GOG and is not part of the description

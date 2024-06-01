@@ -73,6 +73,7 @@ public class GOGScraper extends GameScraper {
         String urlSlug = gameListNode.get("slug").asText();
         String url = String.format(GOG_GAME_URL_FORMAT, CONFIG.getLocale().getLanguage(), urlSlug);
 
+        // Price is not set here because it is horribly unreliable and spits out inaccurate information
         Game game = Game.builder()
                 .title(gameListNode.get("title").asText())
                 .url(url)
