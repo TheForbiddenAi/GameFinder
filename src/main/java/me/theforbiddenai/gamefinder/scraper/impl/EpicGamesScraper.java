@@ -44,37 +44,22 @@ public class EpicGamesScraper extends GameScraper {
     @Override
     public List<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
-            int start = 0;
-            boolean shouldContinue = true;
-
             List<ScraperResult> scraperResults = new ArrayList<>();
+            JsonNode jNode = retrieveJson();
 
-            // Pull games from the GraphQL API in batches of MAX_ENTRIES until a game that does not have a 100% discount is found
-            // This works because EpicGames' GraphQL API allows you to sort the returned objects by price
-            while (shouldContinue) {
-                JsonNode jNode = retrieveJson(start);
+            for (JsonNode gameJson : jNode) {
+                // Convert each element to a game object using jsonToGame,
+                Game game = jsonToGame(gameJson);
 
-                // Loop through jNode elements,
-                for (JsonNode gameJson : jNode) {
-                    // Convert each element to a game object using jsonToGame,
-                    Game game = jsonToGame(gameJson);
+                // This shouldn't happen due to the way the information is requested from the GraphQL API.
+                if(game == null) continue;
 
-                    // Returned game is not 100%, break the for loop
-                    if (game == null) {
-                        shouldContinue = false;
-                        break;
-                    }
+                // This shouldn't happen due to the way the information is requested from the GraphQL API.
+                if (!CONFIG.includeDLCs() && game.isDLC()) continue;
 
-                    start++;
-
-                    // This shouldn't happen due to the way the information is requested from the GraphQL API.
-                    if (!CONFIG.includeDLCs() && game.isDLC()) continue;
-
-                    // Wrap game object in a ScraperResult class and add it to the scraperResults list
-                    scraperResults.add(new ScraperResult(game));
-                }
+                // Wrap game object in a ScraperResult class and add it to the scraperResults list
+                scraperResults.add(new ScraperResult(game));
             }
-
 
             return scraperResults;
         } catch (IOException ex) {
@@ -224,11 +209,10 @@ public class EpicGamesScraper extends GameScraper {
     /**
      * Retrieves the json data for free games on EpicGames
      *
-     * @param start The entry to start at
      * @return A JsonNode containing the json data
      * @throws IOException If objectMapper fails to read the data
      */
-    private JsonNode retrieveJson(int start) throws IOException {
+    private JsonNode retrieveJson() throws IOException {
 
         Map<String, Object> variables = new HashMap<>();
 
@@ -245,7 +229,8 @@ public class EpicGamesScraper extends GameScraper {
         variables.put("onSale", true);
         variables.put("sortBy", "currentPrice");
         variables.put("sortDir", "ASC");
-        variables.put("start", start);
+        variables.put("start", 0);
+        variables.put("freeGame", true);
         variables.put("withPrice", true);
 
         return graphQLClient.executeQuery(GraphQLClient.STORE_QUERY, variables).get("data")
