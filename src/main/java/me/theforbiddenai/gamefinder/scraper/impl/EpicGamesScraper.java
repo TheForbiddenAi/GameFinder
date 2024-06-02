@@ -52,7 +52,7 @@ public class EpicGamesScraper extends GameScraper {
                 Game game = jsonToGame(gameJson);
 
                 // This shouldn't happen due to the way the information is requested from the GraphQL API.
-                if(game == null) continue;
+                if (game == null) continue;
 
                 // This shouldn't happen due to the way the information is requested from the GraphQL API.
                 if (!CONFIG.includeDLCs() && game.isDLC()) continue;
@@ -142,23 +142,25 @@ public class EpicGamesScraper extends GameScraper {
      * Gets the store page URL for a game listing from its json data
      *
      * @param gameJson The json data for the game listing
+     * @param isDLC    Whether the listing is a DLC or nto
      * @return The URL for the game listing, or the epic games store URL if it cannot be found
      */
-    private String getGameUrl(JsonNode gameJson, Boolean isDLC) {
+    private String getGameUrl(JsonNode gameJson, boolean isDLC) {
         // First try to find offer page if it exists
-        String slug = isDLC ? gameJson.get("urlSlug").asText("") : gameJson.get("productSlug").asText("");
-        if (!slug.isBlank()) return EPIC_URL_PREFIX + slug;
+        // Ensure the necessary field exists before accessing it
+        if ((isDLC && gameJson.has("urlSlug")) || (!isDLC && gameJson.has("productSlug"))) {
+            String slug = isDLC ? gameJson.get("urlSlug").asText("") : gameJson.get("productSlug").asText("");
+            if (!slug.isBlank()) return EPIC_URL_PREFIX + slug;
+        }
 
-        // If can't find offer page, attempt to find product homePage in catalogNs
+        // If can't find offer page, attempt to find product home page in catalogNs
         JsonNode catalogNs = gameJson.get("catalogNs");
 
-        if (catalogNs.has("mappings")) {
-            for (JsonNode mapping : catalogNs.get("mappings")) {
-                if (!mapping.has("pageSlug")) continue;
-                if (!mapping.has("pageType")) continue;
-                // Make sure that we are grabbing the productHome mapping and not some random DLC/offer
-                if (!mapping.get("pageType").asText("").equalsIgnoreCase("productHome")) continue;
-                return EPIC_URL_PREFIX + mapping.get("pageSlug").asText();
+        if (catalogNs != null && catalogNs.has("mappings")) {
+            // mappings will only ever have productHome pageTypes due to the way information is requested from GraphQL API
+            Iterator<JsonNode> mappingIterator = catalogNs.get("mappings").iterator();
+            if (mappingIterator.hasNext()) {
+                return EPIC_URL_PREFIX + mappingIterator.next().get("pageSlug").asText();
             }
         }
 
@@ -216,9 +218,6 @@ public class EpicGamesScraper extends GameScraper {
 
         Map<String, Object> variables = new HashMap<>();
 
-        // Take in 5. Immediately stop once a non 100% is found. If reach 5 and at 100% retrieve another (start at 5)
-        // To include DLCs add |addons
-
         String category = "games|bundles";
         // Retrieve addons if DLCs is enabled
         category = CONFIG.includeDLCs() ? category + "|addons" : category;
@@ -231,6 +230,7 @@ public class EpicGamesScraper extends GameScraper {
         variables.put("sortDir", "ASC");
         variables.put("start", 0);
         variables.put("freeGame", true);
+        variables.put("pageType", "productHome");
         variables.put("withPrice", true);
 
         return graphQLClient.executeQuery(GraphQLClient.STORE_QUERY, variables).get("data")
