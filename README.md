@@ -2,7 +2,7 @@
 A Java library that finds 100% off games from Steam, EpicGames, and GOG.
 
 ## Usage
-First, create an instance of the GameFinder class.
+First, create an instance of the GameFinder class:
 ```java
 GameFinder gameFinder = new GameFinder();
 ```
@@ -14,7 +14,7 @@ config.getEnabledPlatforms().add(Platform.EPIC_GAMES);
 config.getEnabledPlatforms().add(Platform.STEAM);
 config.getEnabledPlatforms().add(Platform.GOG);
 ```
-The above lines will enable all platforms. To retrieve games there are two options:
+The above lines will enable all platforms. To retrieve games, there are two options:
 
 The first way (and the recommended way) is to call the retrieveGamesAsync method.
 As the name implies, this will retrieve games asynchronously.
@@ -89,7 +89,7 @@ config.setExecutorService(Executors.newFixedThreadPool(5));
 ```
 
 ## What Exactly is Web-Scraped?
-Wherever possible, I try to use publically accessible APIs provided by each service. These APIs are usually undocumented and don't always have all of the information required.
+Wherever possible, I try to use publically accessible APIs provided by each service. These APIs are usually undocumented and don't always have all the required information.
 
 **EpicGames**: Nothing
 
@@ -102,8 +102,13 @@ Wherever possible, I try to use publically accessible APIs provided by each serv
   3. The discount expiration end time
   4. Miscellaneous `storeMedia` and `media` entries
 
-The reason so much stuff is web-scraped for GOG is because GOG embeds a JSON object inside the HTML of each game listing containing all of the necessary data.
+So much information is web-scraped from GOG because GOG embeds a JSON object inside the HTML of each game listing containing all of the necessary data.
 This data is otherwise spread across several API endpoints, except for the expiration end time. Furthermore, the price endpoint is historically unreliable and returns blatantly incorrect information.
 
-
-
+## Known Limitations
+1. GOG games will only ever list prices in USD despite the platform supporting both USD and CAD
+   * <ins>Solution</ins> (Not implemented yet): Insert the following cookie if the locale is Canada `gog_lc=CA_CAD_en-US`
+2. As part of EpicGames' free game promotions, occasionally a listing for a DLC is created for the sole purpose of this promotion that is deleted once the promotion is over. If the listing is not marked as on sale, GameFinder will NOT find them.
+   * <ins>Solution</ins> (Not implemented yet): Use the freeGamesPromotions in combination with the GraphQL API
+      * This is a rare issue and most likely will not be fixed.
+      * The reason I use the GraphQL API over the freeGamesPromotions is that games can be 100% off and not be part of Epic's free games promotions
