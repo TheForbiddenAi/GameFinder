@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  *
  * @author TheForbiddenAi
  */
-public class SteamWebScrape extends WebScraper<Long> {
+public class SteamWebScraper extends WebScraper<Long> {
 
     // Matches strings like May 10 @ 1:00PM
     private static final Pattern STEAM_MONTH_DAY_TIME_REGEX = Pattern.compile("([A-z]{3} \\d{1,2}) (@ \\d{1,2}:\\d{2}(am|pm)?)");
@@ -30,7 +30,7 @@ public class SteamWebScrape extends WebScraper<Long> {
             .parseDefaulting(ChronoField.YEAR, Year.now().getValue())
             .toFormatter();
 
-    public SteamWebScrape() {
+    public SteamWebScraper() {
         super("birthtime=568022401");
     }
 

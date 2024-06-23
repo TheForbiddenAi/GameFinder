@@ -1,7 +1,7 @@
 package me.theforbiddenai.gamefinder.scraper;
 
 import me.theforbiddenai.gamefinder.domain.Game;
-import me.theforbiddenai.gamefinder.webscraper.SteamWebScrape;
+import me.theforbiddenai.gamefinder.webscraper.SteamWebScraper;
 import me.theforbiddenai.gamefinder.webscraper.WebScraper;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -23,13 +23,13 @@ import static org.mockito.Mockito.when;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SteamWebScraperTest {
 
-    private SteamWebScrape webScraper;
+    private SteamWebScraper webScraper;
 
     private OkHttpClient mockHttpClient;
 
     @BeforeAll
     public void setupTests() throws IOException, IllegalAccessException {
-        this.webScraper = new SteamWebScrape();
+        this.webScraper = new SteamWebScraper();
         this.mockHttpClient = mock(OkHttpClient.class);
 
         Call mockCall = mock(Call.class);

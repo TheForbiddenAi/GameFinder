@@ -2,7 +2,7 @@
 A Java library that finds 100% off games from Steam, EpicGames, and GOG.
 
 ## Usage
-First, create an instance of the GameFinder class:
+First, create an instance of the `GameFinder` class:
 ```java
 GameFinder gameFinder = new GameFinder();
 ```
@@ -16,7 +16,7 @@ config.getEnabledPlatforms().add(Platform.GOG);
 ```
 The above lines will enable all platforms. To retrieve games, there are two options:
 
-The first way (and the recommended way) is to call the retrieveGamesAsync method.
+The first way (and the recommended way) is to call the `retrieveGamesAsync` method.
 As the name implies, this will retrieve games asynchronously.
 ```java
 gameFinder.retrieveGamesAsync((gameList) -> System.out.println(gameList));
@@ -26,7 +26,7 @@ This method takes in a callback that returns a list of Game objects.
 NOTE: The callback will be called one time for each platform. 
   * This means that each list will contain games from only ONE platform.
 
-The second way to retrieve games is to call the retrieveGames method.
+The second way to retrieve games is to call the `retrieveGames` method.
 This will retrieve games synchronously and return a list containing ALL found games.
 ```java
 List<Game> games = gameFinder.retrieveGames();
@@ -49,7 +49,7 @@ GameFinder returns Game objects. Here is what each Game object contains
 9. The `expirationTime` in epoch seconds (If an expiration time cannot be found, this property will be set to -1)
 
 ## Configuration
-GameFinder has a singleton configuration class named GameFinderConfiguration.
+GameFinder has a singleton configuration class named `GameFinderConfiguration`.
 To access its instance, use the `getInstance` method:
 ```java
 GameFinderConfiguration config = GameFinderConfiguration.getInstance();
@@ -74,7 +74,7 @@ config.allowSteamMatureContentScreenshots(false);
 ```
 <ins>NOTE</ins>: As stated above, this is ONLY for Steam and ONLY applies to the screenshots that are accessible in the Game object.
 
-By default, GameFinder's locale is set to en-US. To change this use the setLocale method
+By default, GameFinder's locale is set to en-US. To change this use the `setLocale` method
 ```java
 config.setLocale(Locale.CANADA);
 ```
@@ -95,7 +95,7 @@ To combat confusion, the `originalPrice` property in the Game object will be set
 Additionally, GOG will sometimes the incorrect currency. I believe this is due to how GOG caches game listings, but I am not sure.
 
 ## What Exactly is Web-Scraped?
-Wherever possible, I try to use publicly accessible APIs provided by each service. These APIs are usually undocumented and don't always have all the required information.
+Wherever possible, I try to use publicly accessible APIs provided by each platform. These APIs are usually undocumented and don't always have all the required information.
 
 **EpicGames**: Nothing
 

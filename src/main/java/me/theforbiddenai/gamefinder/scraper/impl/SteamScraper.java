@@ -11,7 +11,7 @@ import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.GameScraper;
 import me.theforbiddenai.gamefinder.utilities.steam.SteamRequests;
-import me.theforbiddenai.gamefinder.webscraper.SteamWebScrape;
+import me.theforbiddenai.gamefinder.webscraper.SteamWebScraper;
 
 import java.io.IOException;
 import java.util.*;
@@ -31,13 +31,13 @@ public class SteamScraper extends GameScraper {
     private static final int CURRENCY_DECIMAL_COUNT = 2;
 
     private final SteamRequests steamRequests;
-    private final SteamWebScrape steamWebScrape;
+    private final SteamWebScraper steamWebScraper;
 
     public SteamScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.STEAM);
 
         this.steamRequests = new SteamRequests(objectMapper);
-        this.steamWebScrape = new SteamWebScrape();
+        this.steamWebScraper = new SteamWebScraper();
     }
 
     /**
@@ -156,7 +156,7 @@ public class SteamScraper extends GameScraper {
 
         // Use web scraping to find the expiration epoch
         // and return a ScrapperResult with a CompletableFuture<Game> object
-        return new ScraperResult(steamWebScrape.modifyGameAttributes(game));
+        return new ScraperResult(steamWebScraper.modifyGameAttributes(game));
     }
 
     /**

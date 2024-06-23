@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  *
  * @author TheForbiddenAi
  */
-public class GOGWebScrape extends WebScraper<JsonNode> {
+public class GOGWebScraper extends WebScraper<JsonNode> {
 
     private static final String JSON_FIELD_FORMAT = "\"%s\":%s";
     private static final int PRODUCT_CARD_FIELD_COUNT = 3;
@@ -41,7 +41,7 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
 
     private final ObjectMapper mapper;
 
-    public GOGWebScrape(ObjectMapper mapper) {
+    public GOGWebScraper(ObjectMapper mapper) {
         super("gog_wantsmaturecontent=9999");
         this.mapper = mapper;
     }
@@ -184,12 +184,17 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
     private String getDescription(JsonNode cardProductNode) {
         String descriptionHTML = Optional.ofNullable(cardProductNode.get("description"))
                 .map(JsonNode::asText)
+                // This is done to maintain newlines that would otherwise be stripped when parsed by Jsoup
+                .map(string -> string.replace("\n", "<br>"))
                 .orElse("N/A");
 
         Document descDocument = Jsoup.parse(descriptionHTML);
 
         // Any paragraph element with the module class is a disclaimer from GOG and is not part of the description
         descDocument.select("p.module").remove();
+
+        // This causes a newline to be inserted after each header
+        descDocument.select("h1, h2, h3, h4, h5, h6, h7").forEach(element -> element.after("<br>"));
 
         // This strips all HTML tags from the description, keeps the original formatting, and strips leading/trailing whitespace
         Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);

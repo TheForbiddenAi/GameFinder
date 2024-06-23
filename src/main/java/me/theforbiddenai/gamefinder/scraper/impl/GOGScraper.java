@@ -9,7 +9,7 @@ import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.GameScraper;
 import me.theforbiddenai.gamefinder.utilities.gog.GOGRequests;
-import me.theforbiddenai.gamefinder.webscraper.GOGWebScrape;
+import me.theforbiddenai.gamefinder.webscraper.GOGWebScraper;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,12 +28,12 @@ public class GOGScraper extends GameScraper {
     private static final String GOG_GAME_URL_FORMAT = "https://www.gog.com/%s/game/%s";
 
     private final GOGRequests gogRequests;
-    private final GOGWebScrape webScrape;
+    private final GOGWebScraper webScraper;
 
     public GOGScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.GOG);
 
-        this.webScrape = new GOGWebScrape(objectMapper);
+        this.webScraper = new GOGWebScraper(objectMapper);
         this.gogRequests = new GOGRequests(objectMapper);
     }
 
@@ -140,8 +140,14 @@ public class GOGScraper extends GameScraper {
         if (!CONFIG.includeDLCs() && isDLC) return null;
 
         Map<String, String> storeMedia = new HashMap<>();
-        storeMedia.put("coverHorizontal", gameNode.get("coverHorizontal").asText());
-        storeMedia.put("coverVertical", gameNode.get("coverVertical").asText());
+
+        if (gameNode.has("coverHorizontal")) {
+            storeMedia.put("coverHorizontal", gameNode.get("coverHorizontal").asText());
+        }
+
+        if (gameNode.has("coverVertical")) {
+            storeMedia.put("coverVertical", gameNode.get("coverVertical").asText());
+        }
 
         // I use slug instead of storeLink because the giveaway object does not contain a storeLink object
         String urlSlug = gameNode.get("slug").asText();
@@ -157,7 +163,7 @@ public class GOGScraper extends GameScraper {
                 .platform(Platform.GOG)
                 .build();
 
-        return new ScraperResult(webScrape.modifyGameAttributes(game));
+        return new ScraperResult(webScraper.modifyGameAttributes(game));
     }
 
     /**
