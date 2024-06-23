@@ -37,15 +37,16 @@ NOTE: The web-scraping portion is still done asynchronously. However, this metho
 
 ## Game Object
 GameFinder returns Game objects. Here is what each Game object contains
-1. Title of the game
-2. Description of the game (translated to the language provided in the locale if provided by the game's platform, otherwise English)
-3. Url to the game's listing
+1. `title` of the game
+2. `description` of the game (translated to the language provided in the locale if provided by the game's platform, otherwise English)
+3. `url` to the game's listing
 4. A boolean (`isDLC`) specifying whether the game object is a DLC or not
-5. The original price of the game (In the currency obtained from the locale if provided by the game's platform, otherwise USD)
-6. A map of store media (`storeMedia`)
+5. The `originalPrice` of the game (In the currency obtained from the locale if provided by the game's platform, otherwise USD)
+6. The `platform` of the game in the form of a Platform enum
+7. A map of store media (`storeMedia`)
    * This contains store art such as the capsule images and page backgrounds for Steam
-7. A list of screenshots (`media`) from the game
-8. The expiration time in epoch seconds
+8. A list of screenshots (`media`) from the game
+9. The `expirationTime` in epoch seconds (If an expiration time cannot be found, this property will be set to -1)
 
 ## Configuration
 GameFinder has a singleton configuration class named GameFinderConfiguration.
