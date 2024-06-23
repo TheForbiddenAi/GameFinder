@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.exception.LocaleException;
 
@@ -33,6 +34,9 @@ public class GameFinderConfiguration {
     @Accessors(fluent = true)
     private boolean allowSteamMatureContentScreenshots = true;
 
+    @Accessors(fluent = true)
+    private boolean useGOGLocaleCookie = false;
+
     // By default, English will return if a game developer has not translated their description
     private Locale locale = Locale.US;
 
@@ -48,8 +52,9 @@ public class GameFinderConfiguration {
      * @throws LocaleException If the provided locale does not have both a language code and a country code
      */
     public void setLocale(Locale locale) throws LocaleException {
-        if (!locale.toString().contains("_"))
-            throw new LocaleException("A locale must have both a language code and country code!");
+        if(!GameFinderConstants.VALID_LOCALES.contains(locale)) {
+            throw new LocaleException("A locale must be a valid combination of a two letter language code and a two letter country code!");
+        }
         this.locale = locale;
     }
 

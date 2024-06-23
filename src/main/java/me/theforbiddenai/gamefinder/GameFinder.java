@@ -57,7 +57,6 @@ public class GameFinder {
             }
         }
 
-
         List<Game> readyGames = new ArrayList<>();
         List<CompletableFuture<Game>> futureGames = new ArrayList<>();
 

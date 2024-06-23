@@ -49,11 +49,11 @@ GameFinder returns Game objects. Here is what each Game object contains
 
 ## Configuration
 GameFinder has a singleton configuration class named GameFinderConfiguration.
-To access it's instance, use the getInstance method:
+To access its instance, use the `getInstance` method:
 ```java
 GameFinderConfiguration config = GameFinderConfiguration.getInstance();
 ```
-As stated above, by default, there are no enabled platforms. To change the enabled platforms, you can either call the setEnabledPlatforms method and pass in a list of Platform enums, or you can call the getEnabledPlatforms and use the built-in Java list functions
+As stated above, by default, there are no enabled platforms. To change the enabled platforms, you can either call the `setEnabledPlatforms` method and pass in a list of Platform enums, or you can call the `getEnabledPlatforms` and use the built-in Java list functions
 ```java
 config.setEnabledPlatforms(List.of(Platform.STEAM, Platform.EPIC_GAMES, Platform.GOG));
 
@@ -62,7 +62,7 @@ config.getEnabledPlatforms().add(Platform.STEAM);
 config.getEnabledPlatforms().add(Platform.GOG);
 ```
 
-By default, GameFinder will return both Games and DLCs. To disable DLCs use the includeDLCs method
+By default, GameFinder will return both Games and DLCs. To disable DLCs use the `includeDLCs` method
 ```java
 config.includeDLCs(false);
 ```
@@ -71,25 +71,30 @@ By default, GameFinder will include screenshots marked as mature content on Stea
 ```java
 config.allowSteamMatureContentScreenshots(false);
 ```
-NOTE: As stated above, this is ONLY for Steam and ONLY applies to the screenshots that are accessible in the Game object.
+<ins>NOTE</ins>: As stated above, this is ONLY for Steam and ONLY applies to the screenshots that are accessible in the Game object.
 
 By default, GameFinder's locale is set to en-US. To change this use the setLocale method
 ```java
 config.setLocale(Locale.CANADA);
 ```
-Restrictions: A locale must have both a language code AND a country code. Otherwise, a LocaleException will be thrown.
-NOTES:
-  * If a Game's description is not translated to the language specified in your locale, it will default to English.
-  * As of now, the GOGScraper ONLY returns currency in USD. GOG as a platform also supports CAD, but that is currently not implemented
-     * GOG also has a price endpoint that supports other currencies. However, this is historically unreliable, returning blatantly incorrect information.
+<ins>Restrictions</ins>: A locale must have both valid combination of a two-letter language code and a two-letter country code. Otherwise, a `LocaleException` will be thrown.
+<br><ins>NOTE</ins>: If a Game's description is not translated to the language specified in your locale, it will default to English.
 
-By default, all CompletableFutures are executed on threads found in `ForkJoinPool.commonPool()`. If you would like to change this you use the setExecutorService method:
+By default, all CompletableFutures are executed on threads found in `ForkJoinPool.commonPool()`. If you would like to change this you use the `setExecutorService` method:
 ```java
 config.setExecutorService(Executors.newFixedThreadPool(5));
 ```
 
+By default, GOG will only return USD.  To change this, do the following: <ins>**This is not recommended!**</ins>
+```java
+config.useGOGLocaleCookie(true);
+```
+If GOG does not support the currency used by the country defined in the locale, it will not return a 0.00. 
+To combat confusion, the `originalPrice` property in the Game object will be set to `N/A (Unsupported Locale)`. 
+Additionally, GOG will sometimes the incorrect currency. I believe this is due to how GOG caches game listings, but I am not sure.
+
 ## What Exactly is Web-Scraped?
-Wherever possible, I try to use publically accessible APIs provided by each service. These APIs are usually undocumented and don't always have all the required information.
+Wherever possible, I try to use publicly accessible APIs provided by each service. These APIs are usually undocumented and don't always have all the required information.
 
 **EpicGames**: Nothing
 
@@ -102,13 +107,11 @@ Wherever possible, I try to use publically accessible APIs provided by each serv
   3. The discount expiration end time
   4. Miscellaneous `storeMedia` and `media` entries
 
-So much information is web-scraped from GOG because GOG embeds a JSON object inside the HTML of each game listing containing all of the necessary data.
-This data is otherwise spread across several API endpoints, except for the expiration end time. Furthermore, the price endpoint is historically unreliable and returns blatantly incorrect information.
+So much information is web-scraped from GOG because GOG embeds a JSON object inside the HTML of each game listing containing all the necessary data.
+This data is otherwise spread across several API endpoints, except for the expiration end time. Furthermore, the price endpoint is historically unreliable and returns blatantly incorrect information on occasion.
 
 ## Known Limitations
-1. GOG games will only ever list prices in USD despite the platform supporting both USD and CAD
-   * <ins>Solution</ins> (Not implemented yet): Insert the following cookie if the locale is Canada `gog_lc=CA_CAD_en-US`
-2. As part of EpicGames' free game promotions, occasionally a listing for a DLC is created for the sole purpose of this promotion that is deleted once the promotion is over. If the listing is not marked as on sale, GameFinder will NOT find them.
+1. As part of EpicGames' free game promotions, occasionally a listing for a DLC is created for the sole purpose of this promotion that is deleted once the promotion is over. If the listing is not marked as on sale, GameFinder will NOT find them.
    * <ins>Solution</ins> (Not implemented yet): Use the freeGamesPromotions in combination with the GraphQL API
       * This is a rare issue and most likely will not be fixed.
       * The reason I use the GraphQL API over the freeGamesPromotions is that games can be 100% off and not be part of Epic's free games promotions

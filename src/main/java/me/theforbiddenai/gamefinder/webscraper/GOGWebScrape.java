@@ -61,7 +61,13 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
                 .map(JsonNode::asDouble);
 
         // If baseAmount exists, parse it.
-        baseAmountOptional.ifPresent(baseAmount -> game.setOriginalPrice(baseAmount, currencyCode));
+        baseAmountOptional.ifPresent(baseAmount -> {
+            if (baseAmount == 0) {
+                game.setOriginalPrice("N/A (Unsupported Locale)");
+            } else {
+                game.setOriginalPrice(baseAmount, currencyCode);
+            }
+        });
 
         game.setDescription(getDescription(cardProductNode));
         game.setExpirationEpoch(getExpirationEpoch(promoNode));
@@ -111,6 +117,18 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getLocaleCookie() {
+        if(!CONFIG.useGOGLocaleCookie()) return null;
+
+        Locale locale = CONFIG.getLocale();
+        Currency currency = Currency.getInstance(locale);
+        return "gog_lc=" + locale.getCountry() + "_" + currency.getCurrencyCode() + "_en-US";
+    }
+
+    /**
      * Adds a given field, and it's value, to the storeMedia map if it exists
      *
      * @param storeMedia      The storeMedia map
@@ -119,7 +137,7 @@ public class GOGWebScrape extends WebScraper<JsonNode> {
      */
     private void insertStoreMediaEntry(Map<String, String> storeMedia, JsonNode cardProductNode, String jsonField) {
         // Make sure the field exists
-        if(!cardProductNode.has(jsonField)) return;
+        if (!cardProductNode.has(jsonField)) return;
 
         // Get the url (default to blank string if null)
         String url = cardProductNode.get(jsonField).asText("");

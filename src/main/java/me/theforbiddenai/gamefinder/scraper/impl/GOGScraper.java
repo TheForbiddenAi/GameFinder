@@ -70,7 +70,7 @@ public class GOGScraper extends GameScraper {
 
                 // Convert the gameNode to a ScraperResult and add it to the list if it isn't null
                 ScraperResult scraperResult = getResultFromJson(gameNode);
-                if (scraperResult != null) results.add(getResultFromJson(gameNode));
+                if (scraperResult != null) results.add(scraperResult);
             }
 
             return results;

@@ -80,7 +80,7 @@ public abstract class WebScraper<T> {
     private T getHTMLData(String url) throws WebScrapeException {
         Request request = new Request.Builder()
                 .url(url)
-                .header("cookie", this.cookies)
+                .header("cookie", this.generateCookieString())
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -94,6 +94,24 @@ public abstract class WebScraper<T> {
         } catch (IOException ex) {
             throw new WebScrapeException("Unable to connect to " + url, ex);
         }
+    }
+
+    /**
+     * Gets the locale cookie for a platform
+     *
+     * @return The locale cookie string
+     */
+    protected abstract String getLocaleCookie();
+
+    /**
+     * Merges the {@code cookies} and {@code getLocaleCookie()} string into one string, delimited by a comma
+     * If {@code getLocaleCookie()} is null, {@code cookies} will be returned
+     *
+     * @return A string containing both cookies
+     */
+    private String generateCookieString() {
+        if (this.getLocaleCookie() == null) return this.cookies;
+        return String.join(",", this.cookies, this.getLocaleCookie());
     }
 
 }

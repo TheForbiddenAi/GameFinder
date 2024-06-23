@@ -79,4 +79,12 @@ public class SteamWebScrape extends WebScraper<Long> {
         scanner.close();
         return GameFinderConstants.NO_EXPIRATION_EPOCH;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getLocaleCookie() {
+        return null;
+    }
 }
