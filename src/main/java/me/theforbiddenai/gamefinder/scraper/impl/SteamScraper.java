@@ -84,6 +84,8 @@ public class SteamScraper extends GameScraper {
      * @return A ScrapperResult containing the game or a future game, or null if the game is not free
      */
     private ScraperResult convertItemNodeToScrapperResult(JsonNode itemNode) {
+        Optional<JsonNode> bestPurchaseOptional = Optional.ofNullable(itemNode.get("best_purchase_option"));
+
         /*
         I do not use the is_free_temporarily field because it does not account for scenarios where it is not possible
         to buy the item individually. It may be 100% off but the page that you would be directed to will still show it at full price.
@@ -93,8 +95,7 @@ public class SteamScraper extends GameScraper {
         get the discount you MUST buy it from Tell Me Why's page. Going to the page for Chapter 2 or Chapter 3 will show the bundle
         as it's full price. https://i.imgur.com/xgQYwqW.png
          */
-        boolean isFree = Optional.ofNullable(itemNode.get("best_purchase_option"))
-                .map(node -> node.get("discount_pct"))
+        boolean isFree = bestPurchaseOptional.map(node -> node.get("discount_pct"))
                 .map(JsonNode::asInt)
                 .orElse(0) == 100;
 
@@ -117,8 +118,7 @@ public class SteamScraper extends GameScraper {
                 .map(JsonNode::asText)
                 .orElse("N/A");
 
-        Optional<Integer> priceNoDecimalOptional = Optional.ofNullable(itemNode.get("best_purchase_option"))
-                .map(node -> node.get("original_price_in_cents"))
+        Optional<Integer> priceNoDecimalOptional = bestPurchaseOptional.map(node -> node.get("original_price_in_cents"))
                 .map(JsonNode::asInt);
 
         // Build game from information available in itemNode
@@ -167,31 +167,30 @@ public class SteamScraper extends GameScraper {
      */
     private long extractDiscountEndDate(JsonNode itemNode) {
         JsonNode bestPurchaseOption = itemNode.get("best_purchase_option");
+        if (bestPurchaseOption == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Pull out active_discounts node
-        JsonNode activeDiscounts = Optional.ofNullable(bestPurchaseOption)
-                .map(node -> node.get("active_discounts"))
-                .orElse(null);
+        JsonNode activeDiscounts = bestPurchaseOption.get("active_discounts");
 
         if (activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Validate there is a price
-        if (!bestPurchaseOption.has("original_price_in_cents")) return GameFinderConstants.NO_EXPIRATION_EPOCH;
+        JsonNode originalPrice = bestPurchaseOption.get("original_price_in_cents");
+        if (originalPrice == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Get the original price in cents.
-        int originalPriceInCents = bestPurchaseOption.get("original_price_in_cents").asInt();
+        int originalPriceInCents = originalPrice.asInt();
 
         // Loop through active discounts (unsure if it's possible for there to be more than one)
         for (JsonNode activeDiscount : activeDiscounts) {
-            // Validate there is a discount
-            if (!activeDiscount.has("discount_amount")) continue;
-
-            // Get discount amount
-            int discountAmount = activeDiscount.get("discount_amount").asInt();
-
             // Ensure that this is the correct discount by verifying that it is 100% off
             // by comparing the discountAmount to the originalPriceInCents
-            if (discountAmount != originalPriceInCents) continue;
+            boolean isCorrectDiscount = Optional.ofNullable(activeDiscount.get("discount_amount"))
+                    .map(JsonNode::asInt)
+                    .map(discountAmount -> discountAmount == originalPriceInCents)
+                    .orElse(false);
+
+            if (!isCorrectDiscount) continue;
 
             // Return the expirationEpoch if found
             if (activeDiscount.has("discount_end_date")) {
@@ -231,12 +230,12 @@ public class SteamScraper extends GameScraper {
         while (fieldIterator.hasNext()) {
             Map.Entry<String, JsonNode> field = fieldIterator.next();
 
-            JsonNode fieldNode = field.getValue();
-
-            // Only want strings; realistically there should only be strings here
-            if (fieldNode.getNodeType() != JsonNodeType.STRING) continue;
-
-            String fieldValue = fieldNode.asText("");
+            // Get the field's value
+            String fieldValue = Optional.ofNullable(field.getValue())
+                    // Only want strings; realistically there should only be strings here
+                    .filter(fieldNode -> fieldNode.getNodeType() == JsonNodeType.STRING)
+                    .map(JsonNode::asText)
+                    .orElse("");
 
             // Make sure fieldValue leads to a file
             if (!fieldValue.contains(".")) continue;
@@ -265,14 +264,14 @@ public class SteamScraper extends GameScraper {
         // Extract screenshots from all_ages_screenshots node and add to screenshots list
         Optional.ofNullable(screenshotsNode.get("all_ages_screenshots"))
                 .map(this::extractScreenshots)
-                .map(screenshots::addAll);
+                .ifPresent(screenshots::addAll);
 
         // Ensure mature content screenshots is enabled
         if (CONFIG.allowSteamMatureContentScreenshots()) {
             // Extract screenshots from mature_content_screenshots node and add to screenshots list
             Optional.ofNullable(screenshotsNode.get("mature_content_screenshots"))
                     .map(this::extractScreenshots)
-                    .map(screenshots::addAll);
+                    .ifPresent(screenshots::addAll);
         }
 
         return screenshots;

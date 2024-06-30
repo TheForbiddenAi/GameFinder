@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class GOGScraperTest {
+class GOGScraperTest {
 
     private GOGScraper scraper;
     private GOGWebScraper mockWebScraper;
@@ -39,7 +39,7 @@ public class GOGScraperTest {
     private List<Game> expectedGamesWithoutDLCs;
 
     @BeforeAll
-    public void setupScraper() throws IOException, IllegalAccessException {
+    void setupScraper() throws IOException, IllegalAccessException {
         ObjectMapper mapper = new ObjectMapper();
         this.homePageSectionsNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-home-page-sections.json"));
         this.giveawaySectionsNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-home-page-giveaway-section.json"));
@@ -107,7 +107,7 @@ public class GOGScraperTest {
     }
 
     @BeforeEach
-    public void setupGameLists() {
+    void setupGameLists() {
         Game gameOne = Game.builder()
                 .title("Game")
                 .url("https://www.gog.com/en/game/slug")
@@ -142,7 +142,7 @@ public class GOGScraperTest {
     }
 
     @Test
-    public void testRetrieveGames() throws GameRetrievalException {
+    void testRetrieveGames() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
         List<Game> actualGames = scraper.retrieveResults().stream()
@@ -154,7 +154,7 @@ public class GOGScraperTest {
     }
 
     @Test
-    public void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
+    void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
         List<Game> actualGames = scraper.retrieveResults().stream()

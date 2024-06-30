@@ -51,11 +51,10 @@ public class EpicGamesScraper extends GameScraper {
                 // Convert each element to a game object using jsonToGame,
                 Game game = jsonToGame(gameJson);
 
-                // This shouldn't happen due to the way the information is requested from the GraphQL API.
-                if (game == null) continue;
+                // A game object is deemed invalid if it is null or if it is a DLC and DLCs are disabled in the config
+                boolean isInvalidGame = game == null || (!CONFIG.includeDLCs() && game.isDLC());
 
-                // This shouldn't happen due to the way the information is requested from the GraphQL API.
-                if (!CONFIG.includeDLCs() && game.isDLC()) continue;
+                if (isInvalidGame) continue;
 
                 // Wrap game object in a ScraperResult class and add it to the scraperResults list
                 scraperResults.add(new ScraperResult(game));

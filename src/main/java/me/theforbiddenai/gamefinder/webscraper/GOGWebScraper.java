@@ -90,9 +90,9 @@ public class GOGWebScraper extends WebScraper<JsonNode> {
             String line = scanner.nextLine().stripLeading();
 
             String jsonField = getJsonField(line, foundFields);
-            if (jsonField == null) continue;
-
-            jsonBuilder.append(jsonField).append(",");
+            if (jsonField != null) {
+                jsonBuilder.append(jsonField).append(",");
+            }
 
             // All required fields have been found
             if (foundFields.size() == PRODUCT_CARD_FIELD_COUNT) break;

@@ -1,8 +1,6 @@
-package me.theforbiddenai.gamefinder.scraper;
+package me.theforbiddenai.gamefinder.webscraper;
 
 import me.theforbiddenai.gamefinder.domain.Game;
-import me.theforbiddenai.gamefinder.webscraper.SteamWebScraper;
-import me.theforbiddenai.gamefinder.webscraper.WebScraper;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
@@ -21,14 +19,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SteamWebScraperTest {
+class SteamWebScraperTest {
 
     private SteamWebScraper webScraper;
 
     private OkHttpClient mockHttpClient;
 
     @BeforeAll
-    public void setupTests() throws IOException, IllegalAccessException {
+    void setupTests() throws IOException, IllegalAccessException {
         this.webScraper = new SteamWebScraper();
         this.mockHttpClient = mock(OkHttpClient.class);
 
@@ -65,7 +63,7 @@ public class SteamWebScraperTest {
     }
 
     @Test
-    public void testWebScrapeExpirationEpoch() {
+    void testWebScrapeExpirationEpoch() {
         Game game = Game.builder()
                 .url("https://store.steampowered.com/")
                 .build();

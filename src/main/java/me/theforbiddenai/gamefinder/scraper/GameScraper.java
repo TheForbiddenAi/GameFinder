@@ -23,7 +23,7 @@ public abstract class GameScraper {
     @Getter
     private final Platform platform;
 
-    public GameScraper(ObjectMapper objectMapper, Platform platform) {
+    protected GameScraper(ObjectMapper objectMapper, Platform platform) {
         this.objectMapper = objectMapper;
         this.platform = platform;
     }

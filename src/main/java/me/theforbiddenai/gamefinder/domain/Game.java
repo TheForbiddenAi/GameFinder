@@ -48,7 +48,7 @@ public class Game {
      * @param currencyCode  The currencyCode of the currency
      * @return The formatted price
      */
-    private static String _setOriginalPrice(double originalPrice, String currencyCode) {
+    private static String formatPrice(double originalPrice, String currencyCode) {
         NumberFormat numberFormat = NumberFormat.getCurrencyInstance(GameFinderConfiguration.getInstance().getLocale());
         Currency currency = Currency.getInstance(currencyCode);
 
@@ -58,16 +58,18 @@ public class Game {
     }
 
     public void setOriginalPrice(double originalPrice, String currencyCode) {
-        this.originalPrice = _setOriginalPrice(originalPrice, currencyCode);
+        this.originalPrice = formatPrice(originalPrice, currencyCode);
     }
 
     public static class GameBuilder {
 
+        // Default value for originalPrice (is used by lombok when builder is called)
+        @SuppressWarnings("unused")
         private String originalPrice = "N/A";
 
         public GameBuilder originalPrice(double originalPrice) {
             Currency currency = Currency.getInstance(GameFinderConfiguration.getInstance().getLocale());
-            this.originalPrice = _setOriginalPrice(originalPrice, currency.getCurrencyCode());
+            this.originalPrice = formatPrice(originalPrice, currency.getCurrencyCode());
             return this;
         }
 

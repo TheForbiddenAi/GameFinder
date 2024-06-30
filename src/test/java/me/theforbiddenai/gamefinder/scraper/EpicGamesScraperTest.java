@@ -30,7 +30,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class EpicGamesScraperTest {
+class EpicGamesScraperTest {
 
     private ObjectMapper mapper;
 
@@ -46,7 +46,7 @@ public class EpicGamesScraperTest {
     // Test Setup
 
     @BeforeAll
-    public void setupJson() throws IOException {
+    void setupJson() throws IOException {
         this.mapper = Mockito.spy(new ObjectMapper());
         this.treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic_games_data/epic-games-scraper-test-data.json"));
 
@@ -55,7 +55,7 @@ public class EpicGamesScraperTest {
     }
 
     @BeforeEach
-    public void setupTests() throws IOException, IllegalAccessException {
+    void setupTests() throws IOException, IllegalAccessException {
         doReturn(treeNode).when(this.mapper).readTree(Mockito.anyString());
 
         this.scraper = new EpicGamesScraper(this.mapper);
@@ -151,7 +151,7 @@ public class EpicGamesScraperTest {
     // Tests
 
     @Test
-    public void testRetrieveGames() throws GameRetrievalException {
+    void testRetrieveGames() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
         List<ScraperResult> returnedGames = scraper.retrieveResults();
@@ -159,7 +159,7 @@ public class EpicGamesScraperTest {
     }
 
     @Test
-    public void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
+    void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
         List<ScraperResult> returnedGames = scraper.retrieveResults();

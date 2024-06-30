@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SteamScraperTest {
+class SteamScraperTest {
 
     private SteamScraper scraper;
     private JsonNode listTreeNode;
@@ -33,7 +33,7 @@ public class SteamScraperTest {
     private List<ScraperResult> expectedGamesWithoutMatureContent;
 
     @BeforeAll
-    public void setupScraper() throws IOException {
+    void setupScraper() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         this.listTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-games-list-test-data.json"));
         this.itemTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-getitems-test-data.json"));
@@ -64,7 +64,7 @@ public class SteamScraperTest {
     }
 
     @BeforeEach
-    public void setupGameLists() {
+    void setupGameLists() {
         Game gameApp = Game.builder()
                 .title("App")
                 .description("Cool App!")
@@ -129,7 +129,7 @@ public class SteamScraperTest {
     }
 
     @Test
-    public void testRetrieveGames() throws GameRetrievalException {
+    void testRetrieveGames() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(true);
 
@@ -138,7 +138,7 @@ public class SteamScraperTest {
     }
 
     @Test
-    public void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
+    void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(true);
 
@@ -147,7 +147,7 @@ public class SteamScraperTest {
     }
 
     @Test
-    public void testRetrieveGamesWithoutMatureContent() throws GameRetrievalException {
+    void testRetrieveGamesWithoutMatureContent() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(false);
 

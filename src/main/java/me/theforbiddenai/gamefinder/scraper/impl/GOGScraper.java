@@ -106,15 +106,13 @@ public class GOGScraper extends GameScraper {
         // Loop through the giveaway section ids
         for (String sectionId : giveawaySectionIds) {
             // Get the section json information
-            Optional<JsonNode> giveawaySectionOptional = gogRequests.getHomePageSection(sectionId);
+            Optional<JsonNode> productionOptional = gogRequests.getHomePageSection(sectionId)
+                    .map(giveawaySection -> giveawaySection.get("product"));
             // Make sure the data was retrieved
-            if (giveawaySectionOptional.isEmpty()) continue;
-
-            JsonNode giveawaySection = giveawaySectionOptional.get();
+            if (productionOptional.isEmpty()) continue;
 
             // Get the product json
-            JsonNode product = giveawaySection.get("product");
-            if (product == null) continue;
+            JsonNode product = productionOptional.get();
 
             // Add the product json to the map
             giveawaySectionMap.put(product.get("id").asText(), product);
@@ -141,13 +139,11 @@ public class GOGScraper extends GameScraper {
 
         Map<String, String> storeMedia = new HashMap<>();
 
-        if (gameNode.has("coverHorizontal")) {
-            storeMedia.put("coverHorizontal", gameNode.get("coverHorizontal").asText());
-        }
+        Optional.ofNullable(gameNode.get("coverHorizontal"))
+                .ifPresent(coverHorizontal ->  storeMedia.put("coverHorizontal", coverHorizontal.asText()));
 
-        if (gameNode.has("coverVertical")) {
-            storeMedia.put("coverVertical", gameNode.get("coverVertical").asText());
-        }
+        Optional.ofNullable(gameNode.get("coverVertical"))
+                .ifPresent(coverHorizontal ->  storeMedia.put("coverVertical", coverHorizontal.asText()));
 
         // I use slug instead of storeLink because the giveaway object does not contain a storeLink object
         String urlSlug = gameNode.get("slug").asText();

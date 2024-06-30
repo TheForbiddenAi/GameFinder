@@ -1,11 +1,10 @@
-package me.theforbiddenai.gamefinder.scraper;
+package me.theforbiddenai.gamefinder;
 
-import me.theforbiddenai.gamefinder.GameFinder;
-import me.theforbiddenai.gamefinder.GameFinderConfiguration;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
+import me.theforbiddenai.gamefinder.scraper.GameScraper;
 import me.theforbiddenai.gamefinder.scraper.impl.EpicGamesScraper;
 import me.theforbiddenai.gamefinder.scraper.impl.SteamScraper;
 import org.junit.jupiter.api.BeforeAll;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class GameFinderTest {
+class GameFinderTest {
 
     private static final GameFinderConfiguration CONFIG = GameFinderConfiguration.getInstance();
 
@@ -40,7 +38,7 @@ public class GameFinderTest {
     private List<Game> expectedSteamResults;
 
     @BeforeAll
-    public void setupTests() throws IllegalAccessException {
+    void setupTests() throws IllegalAccessException {
         this.gameFinder = new GameFinder();
         this.mockEpicGamesScraper = mock(EpicGamesScraper.class);
         this.mockSteamScraper = mock(SteamScraper.class);
@@ -70,7 +68,7 @@ public class GameFinderTest {
     }
 
     @BeforeEach
-    public void setupScrapers() throws GameRetrievalException {
+    void setupScrapers() throws GameRetrievalException {
         List<ScraperResult> epicGamesResults = List.of(
                 new ScraperResult(
                         Game.builder()
@@ -110,7 +108,7 @@ public class GameFinderTest {
     }
 
     @Test
-    public void testRetrieveGames() throws GameRetrievalException {
+    void testRetrieveGames() throws GameRetrievalException {
         CONFIG.getEnabledPlatforms().addAll(List.of(Platform.EPIC_GAMES, Platform.STEAM));
 
         List<Game> expectedGames = new ArrayList<>();
@@ -126,7 +124,7 @@ public class GameFinderTest {
     }
 
     @Test
-    public void testRetrieveGamesAsync() throws InterruptedException {
+    void testRetrieveGamesAsync() throws InterruptedException {
         CONFIG.getEnabledPlatforms().addAll(List.of(Platform.EPIC_GAMES, Platform.STEAM));
 
         List<Game> expectedGames = new ArrayList<>();
@@ -160,8 +158,7 @@ public class GameFinderTest {
                         return scraperResult.getGame();
                     // Get result from future
                     return scraperResult.getFutureGame().join();
-                })
-                .collect(Collectors.toList());
+                }).toList();
     }
 
 }

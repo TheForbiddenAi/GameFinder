@@ -28,12 +28,10 @@ public abstract class WebScraper<T> {
     private final OkHttpClient httpClient;
 
 
-    public WebScraper(String cookies) {
+    protected WebScraper(String cookies) {
         this.cookies = cookies;
         this.httpClient = new OkHttpClient();
     }
-
-    // TODO: Caching system?
 
     /**
      * Web scrapes the remaining data for a game object. The data being web scraped depends on the implementation of
