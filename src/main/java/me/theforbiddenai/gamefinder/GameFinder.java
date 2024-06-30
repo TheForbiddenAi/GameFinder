@@ -38,6 +38,10 @@ public class GameFinder {
         this.gameScrapers.add(new GOGScraper(MAPPER));
     }
 
+    public GameFinder(List<GameScraper> gameScrapers) {
+        this.gameScrapers = gameScrapers;
+    }
+
     /**
      * Retrieves games with a 100% discount from all the platforms listed
      * in {@link GameFinderConfiguration#getEnabledPlatforms()}. This function

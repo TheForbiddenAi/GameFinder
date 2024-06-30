@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.exception.WebScrapeException;
+import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
@@ -43,6 +44,11 @@ public class GOGWebScraper extends WebScraper<JsonNode> {
 
     public GOGWebScraper(ObjectMapper mapper) {
         super("gog_wantsmaturecontent=9999");
+        this.mapper = mapper;
+    }
+
+    public GOGWebScraper(OkHttpClient httpClient, ObjectMapper mapper) {
+        super("gog_wantsmaturecontent=9999", httpClient);
         this.mapper = mapper;
     }
 

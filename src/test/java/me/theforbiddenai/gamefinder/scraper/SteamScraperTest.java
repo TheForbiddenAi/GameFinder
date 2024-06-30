@@ -24,19 +24,17 @@ import static org.mockito.Mockito.mock;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SteamScraperTest {
 
-    private SteamScraper scraper;
-    private JsonNode listTreeNode;
-    private JsonNode itemTreeNode;
+    private SteamScraper steamScraper;
 
-    private List<ScraperResult> expectedGamesWithDLCs;
-    private List<ScraperResult> expectedGamesWithoutDLCs;
-    private List<ScraperResult> expectedGamesWithoutMatureContent;
+    private List<ScraperResult> expectedGamesWithDLCsList;
+    private List<ScraperResult> expectedGamesWithoutDLCsList;
+    private List<ScraperResult> expectedGamesWithoutMatureContentList;
 
     @BeforeAll
     void setupScraper() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        this.listTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-games-list-test-data.json"));
-        this.itemTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-getitems-test-data.json"));
+        JsonNode listTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-games-list-test-data.json"));
+        JsonNode itemTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-getitems-test-data.json"));
 
         // Inject return values into objectMapper map on readTree call
         ObjectMapper mockObjectMapper = mock(ObjectMapper.class, answer -> {
@@ -50,17 +48,17 @@ class SteamScraperTest {
             // Return the correct value depending on the URL path
             switch (url.getPath()) {
                 case "/search/results/" -> {
-                    return this.listTreeNode;
+                    return listTreeNode;
                 }
                 case "/IStoreBrowseService/GetItems/v1" -> {
-                    return this.itemTreeNode;
+                    return itemTreeNode;
                 }
             }
 
             return answer.callRealMethod();
         });
 
-        this.scraper = new SteamScraper(mockObjectMapper);
+        this.steamScraper = new SteamScraper(mockObjectMapper);
     }
 
     @BeforeEach
@@ -123,9 +121,9 @@ class SteamScraperTest {
                 .expirationEpoch(1716310800L)
                 .build();
 
-        expectedGamesWithDLCs = List.of(new ScraperResult(gameApp), new ScraperResult(gamePackage), new ScraperResult(gameBundle));
-        expectedGamesWithoutMatureContent = List.of(new ScraperResult(gameApp), new ScraperResult(gameTwoNoMatureContent), new ScraperResult(gameBundle));
-        expectedGamesWithoutDLCs = List.of(new ScraperResult(gamePackage), new ScraperResult(gameBundle));
+        expectedGamesWithDLCsList = List.of(new ScraperResult(gameApp), new ScraperResult(gamePackage), new ScraperResult(gameBundle));
+        expectedGamesWithoutMatureContentList = List.of(new ScraperResult(gameApp), new ScraperResult(gameTwoNoMatureContent), new ScraperResult(gameBundle));
+        expectedGamesWithoutDLCsList = List.of(new ScraperResult(gamePackage), new ScraperResult(gameBundle));
     }
 
     @Test
@@ -133,8 +131,8 @@ class SteamScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(true);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(true);
 
-        List<ScraperResult> returnedGames = scraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithDLCs, returnedGames);
+        List<ScraperResult> returnedGames = steamScraper.retrieveResults();
+        assertIterableEquals(expectedGamesWithDLCsList, returnedGames);
     }
 
     @Test
@@ -142,8 +140,8 @@ class SteamScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(false);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(true);
 
-        List<ScraperResult> returnedGames = scraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithoutDLCs, returnedGames);
+        List<ScraperResult> returnedGames = steamScraper.retrieveResults();
+        assertIterableEquals(expectedGamesWithoutDLCsList, returnedGames);
     }
 
     @Test
@@ -151,8 +149,8 @@ class SteamScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(true);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(false);
 
-        List<ScraperResult> returnedGames = scraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithoutMatureContent, returnedGames);
+        List<ScraperResult> returnedGames = steamScraper.retrieveResults();
+        assertIterableEquals(expectedGamesWithoutMatureContentList, returnedGames);
     }
 
 }

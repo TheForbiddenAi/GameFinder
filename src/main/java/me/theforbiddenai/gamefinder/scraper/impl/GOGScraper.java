@@ -28,13 +28,20 @@ public class GOGScraper extends GameScraper {
     private static final String GOG_GAME_URL_FORMAT = "https://www.gog.com/%s/game/%s";
 
     private final GOGRequests gogRequests;
-    private final GOGWebScraper webScraper;
+    private final GOGWebScraper gogWebScraper;
 
     public GOGScraper(ObjectMapper objectMapper) {
         super(objectMapper, Platform.GOG);
 
-        this.webScraper = new GOGWebScraper(objectMapper);
         this.gogRequests = new GOGRequests(objectMapper);
+        this.gogWebScraper = new GOGWebScraper(objectMapper);
+    }
+
+    public GOGScraper(ObjectMapper objectMapper, GOGRequests gogRequests, GOGWebScraper gogWebScraper) {
+        super(objectMapper, Platform.GOG);
+
+        this.gogRequests = gogRequests;
+        this.gogWebScraper = gogWebScraper;
     }
 
     /**
@@ -159,7 +166,7 @@ public class GOGScraper extends GameScraper {
                 .platform(Platform.GOG)
                 .build();
 
-        return new ScraperResult(webScraper.modifyGameAttributes(game));
+        return new ScraperResult(gogWebScraper.modifyGameAttributes(game));
     }
 
     /**

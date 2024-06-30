@@ -24,9 +24,13 @@ public class GraphQLClient {
     private final ObjectMapper mapper;
 
     public GraphQLClient(ObjectMapper mapper) {
-        this.httpClient = new OkHttpClient();
-
         this.mapper = mapper;
+        this.httpClient = new OkHttpClient();
+    }
+
+    public GraphQLClient(ObjectMapper mapper, OkHttpClient httpClient) {
+        this.mapper = mapper;
+        this.httpClient = httpClient;
     }
 
     /**

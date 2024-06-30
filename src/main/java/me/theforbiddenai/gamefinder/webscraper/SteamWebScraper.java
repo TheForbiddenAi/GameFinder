@@ -2,6 +2,7 @@ package me.theforbiddenai.gamefinder.webscraper;
 
 import me.theforbiddenai.gamefinder.constants.GameFinderConstants;
 import me.theforbiddenai.gamefinder.domain.Game;
+import okhttp3.OkHttpClient;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -32,6 +33,10 @@ public class SteamWebScraper extends WebScraper<Long> {
 
     public SteamWebScraper() {
         super("birthtime=568022401");
+    }
+
+    public SteamWebScraper(OkHttpClient httpClient) {
+        super("birthtime=568022401", httpClient);
     }
 
     /**

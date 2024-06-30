@@ -38,6 +38,12 @@ public class EpicGamesScraper extends GameScraper {
         this.graphQLClient = new GraphQLClient(objectMapper);
     }
 
+    public EpicGamesScraper(ObjectMapper objectMapper, GraphQLClient graphQLClient) {
+        super(objectMapper, Platform.EPIC_GAMES);
+
+        this.graphQLClient = graphQLClient;
+    }
+
     /**
      * {@inheritDoc}
      */

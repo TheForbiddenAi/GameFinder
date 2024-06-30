@@ -33,6 +33,11 @@ public abstract class WebScraper<T> {
         this.httpClient = new OkHttpClient();
     }
 
+    protected WebScraper(String cookies, OkHttpClient httpClient) {
+        this.cookies = cookies;
+        this.httpClient = httpClient;
+    }
+
     /**
      * Web scrapes the remaining data for a game object. The data being web scraped depends on the implementation of
      * updateGame

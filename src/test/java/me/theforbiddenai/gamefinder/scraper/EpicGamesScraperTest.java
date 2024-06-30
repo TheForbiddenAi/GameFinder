@@ -17,11 +17,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.platform.commons.util.ReflectionUtils;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
@@ -32,37 +30,28 @@ import static org.mockito.Mockito.when;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EpicGamesScraperTest {
 
-    private ObjectMapper mapper;
+    private EpicGamesScraper epicGamesScraper;
 
-    private EpicGamesScraper scraper;
-    private JsonNode treeNode;
-
-    private GraphQLClient graphQLClient;
-    private OkHttpClient mockClient;
-
-    private List<ScraperResult> expectedGamesWithDLCs;
-    private List<ScraperResult> expectedGamesWithoutDLCs;
+    private List<ScraperResult> expectedGamesWithDLCsList;
+    private List<ScraperResult> expectedGamesWithoutDLCsList;
 
     // Test Setup
 
     @BeforeAll
     void setupJson() throws IOException {
-        this.mapper = Mockito.spy(new ObjectMapper());
-        this.treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic_games_data/epic-games-scraper-test-data.json"));
+        ObjectMapper mapper = Mockito.spy(new ObjectMapper());
+        JsonNode treeNode = mapper.readTree(EpicGamesScraperTest.class.getResourceAsStream("/scraper/epic_games_data/epic-games-scraper-test-data.json"));
+        doReturn(treeNode).when(mapper).readTree(Mockito.anyString());
 
-        this.graphQLClient = new GraphQLClient(mapper);
-        this.mockClient = Mockito.mock(OkHttpClient.class);
+        OkHttpClient mockHttpClient = Mockito.mock(OkHttpClient.class);
+        setupOkHttpMocks(mockHttpClient);
+
+        GraphQLClient graphQLClient = new GraphQLClient(mapper, mockHttpClient);
+        this.epicGamesScraper = new EpicGamesScraper(mapper, graphQLClient);
     }
 
     @BeforeEach
-    void setupTests() throws IOException, IllegalAccessException {
-        doReturn(treeNode).when(this.mapper).readTree(Mockito.anyString());
-
-        this.scraper = new EpicGamesScraper(this.mapper);
-
-        setupOkHttpMocks();
-        injectMocks();
-
+    void setupGameLists() {
         Game gameOne = Game.builder()
                 .title("Game")
                 .description("Cool game.")
@@ -87,61 +76,23 @@ class EpicGamesScraperTest {
                 .expirationEpoch(1715871600L)
                 .build();
 
-        expectedGamesWithDLCs = List.of(new ScraperResult(gameOne), new ScraperResult(gameTwo));
-        expectedGamesWithoutDLCs = List.of(new ScraperResult(gameOne));
+        expectedGamesWithDLCsList = List.of(new ScraperResult(gameOne), new ScraperResult(gameTwo));
+        expectedGamesWithoutDLCsList = List.of(new ScraperResult(gameOne));
     }
 
     // Utilities
 
     /**
-     * Injects the {@link this#graphQLClient} into {@link this#scraper} and {@link this#mockClient} into {@link this#graphQLClient}
-     *
-     * @throws IllegalAccessException If the fields are unable to be set
-     */
-    private void injectMocks() throws IllegalAccessException {
-        // Using reflection is not ideal. However, this is done to ensure that these tests do not connect to the internet
-
-        // Pull out private scrapers field from GameFinder class
-        Field graphQlClientField = getField(EpicGamesScraper.class, "graphQLClient");
-        Field okHttpClientField = getField(GraphQLClient.class, "httpClient");
-
-        // Set the fields to accessible
-        graphQlClientField.setAccessible(true);
-        okHttpClientField.setAccessible(true);
-
-        // Inject the objects
-        graphQlClientField.set(this.scraper, graphQLClient);
-        okHttpClientField.set(graphQLClient, mockClient);
-
-        // Set the fields to be inaccessible
-        graphQlClientField.setAccessible(false);
-        okHttpClientField.setAccessible(false);
-    }
-
-    /**
-     * Gets a field object from a given clazz and field name
-     *
-     * @param clazz     The clazz the field exists within
-     * @param fieldName The name of the field
-     * @return The found field object
-     */
-    private Field getField(Class<?> clazz, String fieldName) {
-        return ReflectionUtils.findFields(clazz, f -> f.getName().equals(fieldName),
-                        ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
-                .get(0);
-    }
-
-    /**
-     * Setups all the mock calls for {@link this#mockClient}
+     * Setups all the mock calls for a mock OkHttpClient object
      *
      * @throws IOException This will never happen
      */
-    private void setupOkHttpMocks() throws IOException {
+    private void setupOkHttpMocks(OkHttpClient mockHttpClient) throws IOException {
         Call mockCall = Mockito.mock(Call.class);
         Response mockResponse = Mockito.mock(Response.class);
         ResponseBody mockResponseBody = Mockito.mock(ResponseBody.class);
 
-        when(this.mockClient.newCall(Mockito.any())).thenReturn(mockCall);
+        when(mockHttpClient.newCall(Mockito.any())).thenReturn(mockCall);
         when(mockCall.execute()).thenReturn(mockResponse);
         when(mockResponse.body()).thenReturn(mockResponseBody);
         when(mockResponse.isSuccessful()).thenReturn(true);
@@ -154,16 +105,16 @@ class EpicGamesScraperTest {
     void testRetrieveGames() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
-        List<ScraperResult> returnedGames = scraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithDLCs, returnedGames);
+        List<ScraperResult> returnedGames = epicGamesScraper.retrieveResults();
+        assertIterableEquals(expectedGamesWithDLCsList, returnedGames);
     }
 
     @Test
     void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
-        List<ScraperResult> returnedGames = scraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithoutDLCs, returnedGames);
+        List<ScraperResult> returnedGames = epicGamesScraper.retrieveResults();
+        assertIterableEquals(expectedGamesWithoutDLCsList, returnedGames);
     }
 
 }

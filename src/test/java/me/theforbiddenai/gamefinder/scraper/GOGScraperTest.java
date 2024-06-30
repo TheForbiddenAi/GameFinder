@@ -8,15 +8,14 @@ import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 import me.theforbiddenai.gamefinder.scraper.impl.GOGScraper;
+import me.theforbiddenai.gamefinder.utilities.gog.GOGRequests;
 import me.theforbiddenai.gamefinder.webscraper.GOGWebScraper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.platform.commons.util.ReflectionUtils;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -28,22 +27,18 @@ import static org.mockito.Mockito.mock;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GOGScraperTest {
 
-    private GOGScraper scraper;
-    private GOGWebScraper mockWebScraper;
+    private GOGScraper gogScraper;
 
-    private JsonNode homePageSectionsNode;
-    private JsonNode giveawaySectionsNode;
-    private JsonNode catalogNode;
-
-    private List<Game> expectedGames;
-    private List<Game> expectedGamesWithoutDLCs;
+    private List<Game> expectedGamesList;
+    private List<Game> expectedGamesWithoutDLCsList;
 
     @BeforeAll
-    void setupScraper() throws IOException, IllegalAccessException {
+    void setupScraper() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        this.homePageSectionsNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-home-page-sections.json"));
-        this.giveawaySectionsNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-home-page-giveaway-section.json"));
-        this.catalogNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-catalog-data.json"));
+
+        JsonNode homePageSectionsNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-home-page-sections.json"));
+        JsonNode giveawaySectionsNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-home-page-giveaway-section.json"));
+        JsonNode catalogNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-catalog-data.json"));
 
         // Inject return values into objectMapper map on readTree call
         ObjectMapper mockObjectMapper = mock(ObjectMapper.class, answer -> {
@@ -57,23 +52,23 @@ class GOGScraperTest {
             // Return the correct value depending on the URL path
             switch (url.getPath()) {
                 case "/v1/pages/2f" -> {
-                    return this.homePageSectionsNode;
+                    return homePageSectionsNode;
                 }
                 case "/v1/pages/2f/sections/2" -> {
-                    return this.giveawaySectionsNode;
+                    return giveawaySectionsNode;
                 }
                 case "/v1/catalog" -> {
-                    return this.catalogNode;
+                    return catalogNode;
                 }
             }
 
             return answer.callRealMethod();
         });
 
-        this.scraper = new GOGScraper(mockObjectMapper);
-
         // Inject return values into mockWebScraper map on modifyGameAttributes call
-        this.mockWebScraper = mock(GOGWebScraper.class, answer -> {
+        // Make sure the method being called is modifyGameAttributes, if not do not inject return values
+        // Ensure the argument passed is a Game object
+        GOGWebScraper mockGOGWebScraper = mock(GOGWebScraper.class, answer -> {
             // Make sure the method being called is modifyGameAttributes, if not do not inject return values
             if (!answer.getMethod().getName().equals("modifyGameAttributes")) return answer.callRealMethod();
 
@@ -84,26 +79,7 @@ class GOGScraperTest {
             return CompletableFuture.completedFuture(game);
         });
 
-        injectMockScraper();
-    }
-
-    /**
-     * Injects the mockWebScraper objects into the webScraper field of a GOGScraper class
-     *
-     * @throws IllegalAccessException If the httpClient field is unable to be set
-     */
-    private void injectMockScraper() throws IllegalAccessException {
-        // Pull out private httpClient field from WebScraper class
-        Field field = ReflectionUtils.findFields(GOGScraper.class, f -> f.getName().equals("webScraper"),
-                        ReflectionUtils.HierarchyTraversalMode.TOP_DOWN)
-                .get(0);
-
-        // Set the field to accessible
-        field.setAccessible(true);
-        // Set the webScraper value to be the mockWebScraper
-        field.set(this.scraper, this.mockWebScraper);
-        // Set the field to be inaccessible
-        field.setAccessible(false);
+        this.gogScraper = new GOGScraper(mockObjectMapper, new GOGRequests(mockObjectMapper), mockGOGWebScraper);
     }
 
     @BeforeEach
@@ -137,32 +113,32 @@ class GOGScraperTest {
                 .platform(Platform.GOG)
                 .build();
 
-        expectedGames = List.of(gameOne, gameTwo, gameThree);
-        expectedGamesWithoutDLCs = List.of(gameOne, gameTwo);
+        expectedGamesList = List.of(gameOne, gameTwo, gameThree);
+        expectedGamesWithoutDLCsList = List.of(gameOne, gameTwo);
     }
 
     @Test
     void testRetrieveGames() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(true);
 
-        List<Game> actualGames = scraper.retrieveResults().stream()
+        List<Game> actualGames = gogScraper.retrieveResults().stream()
                 .map(ScraperResult::getFutureGame)
                 .map(CompletableFuture::join)
                 .toList();
 
-        assertIterableEquals(expectedGames, actualGames);
+        assertIterableEquals(expectedGamesList, actualGames);
     }
 
     @Test
     void testRetrieveGamesWithoutDLCs() throws GameRetrievalException {
         GameFinderConfiguration.getInstance().includeDLCs(false);
 
-        List<Game> actualGames = scraper.retrieveResults().stream()
+        List<Game> actualGames = gogScraper.retrieveResults().stream()
                 .map(ScraperResult::getFutureGame)
                 .map(CompletableFuture::join)
                 .toList();
 
-        assertIterableEquals(expectedGamesWithoutDLCs, actualGames);
+        assertIterableEquals(expectedGamesWithoutDLCsList, actualGames);
     }
 
 }

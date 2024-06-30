@@ -40,6 +40,13 @@ public class SteamScraper extends GameScraper {
         this.steamWebScraper = new SteamWebScraper();
     }
 
+    public SteamScraper(ObjectMapper objectMapper, SteamRequests steamRequests, SteamWebScraper steamWebScraper) {
+        super(objectMapper, Platform.STEAM);
+
+        this.steamRequests = steamRequests;
+        this.steamWebScraper = steamWebScraper;
+    }
+
     /**
      * {@inheritDoc}
      */
