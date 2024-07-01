@@ -37,7 +37,7 @@ class SteamWebScraperTest {
     }
 
     @Test
-    void testWebScrapeExpirationEpoch() {
+    void testSteamModifyGameAttributes() {
         Game game = Game.builder()
                 .url("https://store.steampowered.com/")
                 .build();

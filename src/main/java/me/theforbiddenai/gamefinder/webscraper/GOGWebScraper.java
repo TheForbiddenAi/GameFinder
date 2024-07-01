@@ -35,7 +35,8 @@ public class GOGWebScraper extends WebScraper<JsonNode> {
             "backgroundImage",
             "boxArtImage",
             "galaxyBackgroundImage",
-            "logo"
+            "logo",
+            "image"
     );
 
     private static final Pattern THREE_OR_MORE_NEWLINES_REGEX = Pattern.compile("(\\n(\\s+)?){3,}");
@@ -150,7 +151,10 @@ public class GOGWebScraper extends WebScraper<JsonNode> {
 
         // Add to map if the url is not null
         if (url.isBlank()) return;
-        storeMedia.put(jsonField, url);
+
+        // Check if url ends in fileExtension via removing the url and checking if the remaining file name contains a period
+        boolean hasFileExtension = url.substring(url.lastIndexOf("/") + 1).contains(".");
+        storeMedia.put(jsonField, hasFileExtension ? url : url + ".jpg");
     }
 
     /**
