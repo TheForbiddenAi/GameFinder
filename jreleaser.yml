@@ -1,0 +1,58 @@
+# Generated with JReleaser 1.13.1 at 2024-07-07T11:26:55.5301224-04:00
+project:
+  name: GameFinder
+  version: 1.0.0
+  description:  A Java library that finds 100% off games from Steam, EpicGames, and GOG.
+  longDescription: A Java library that finds 100% off games from Steam, EpicGames, and GOG.
+  authors:
+    - TheForbiddenAi
+  license: MIT
+  links:
+    homepage: https://github.com/TheForbiddenAi/GameFinder
+  java:
+    groupId: io.github.theforbiddenai
+    version: '17'
+  inceptionYear: '2024'
+
+signing:
+  active: ALWAYS
+  mode: COMMAND
+  armored: true
+  verify: true
+
+release:
+  github:
+    overwrite: true
+    sign: true
+    owner: TheForbiddenAi
+
+assemble:
+  javaArchive:
+    GameFinder:
+      active: ALWAYS
+      fileSets:
+        - input: '.'
+          includes:
+            - 'LICENSE'
+            - 'README.md'
+      mainJar:
+        path: build/libs/{{distributionName}}-{{projectVersion}}.jar
+
+
+deploy:
+  maven:
+    mavenCentral:
+      sonatype:
+        active: ALWAYS
+        url: https://central.sonatype.com/api/v1/publisher
+        applyMavenCentralRules: true
+        sign: true
+        stagingRepositories:
+          - build/staging-deploy
+
+distributions:
+  GameFinder:
+    active: ALWAYS
+    type: SINGLE_JAR
+    artifacts:
+      - path: build/libs/{{distributionName}}-{{projectVersion}}.jar

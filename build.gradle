@@ -2,10 +2,12 @@ plugins {
     id 'java'
     id "io.freefair.lombok" version "8.6"
     id 'jacoco'
+    id 'org.jreleaser' version '1.13.1'
+    id 'maven-publish'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'io.github.theforbiddenai'
+version '1.0.0'
 
 repositories {
     mavenCentral()
@@ -21,6 +23,11 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
@@ -29,3 +36,62 @@ test {
 jacocoTestReport {
     dependsOn test
 }
+
+jreleaser {
+    configFile = "jreleaser.yml"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'io.github.theforbiddenai'
+            artifactId = 'GameFinder'
+
+            from components.java
+
+            pom {
+                name = 'GameFinder'
+                description = 'A Java library that finds 100% off games from Steam, EpicGames, and GOG.'
+                url = 'http://github.com/theforbiddenai/gamefinder'
+                inceptionYear = '2024'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://spdx.org/licenses/MIT.html'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'TheForbiddenAi'
+                        name = 'Mason'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/theforbiddenai/gamefinder.git'
+                    developerConnection = 'scm:git:ssh://github.com/theforbiddenai/gamefinder.git'
+                    url = 'http://github.com/theforbiddenai/gamefinder'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = layout.buildDirectory.dir('staging-deploy')
+        }
+    }
+}
+
+tasks.register('assembleAndFullRelease') {
+    dependsOn(publish)
+    dependsOn(jreleaserAssemble)
+    dependsOn(jreleaserFullRelease)
+}
+
+tasks.register('cleanStagedRepository') {
+    delete layout.buildDirectory.dir('staging-deploy').get()
+}
+
+publish.dependsOn(cleanStagedRepository)
+jreleaserAssemble.mustRunAfter(publish)
+jreleaserFullRelease.mustRunAfter(jreleaserAssemble)
