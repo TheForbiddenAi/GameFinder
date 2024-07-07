@@ -51,7 +51,7 @@ public class SteamScraper extends GameScraper {
      * {@inheritDoc}
      */
     @Override
-    public List<ScraperResult> retrieveResults() throws GameRetrievalException {
+    public Collection<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
             Optional<JsonNode> gameListOptional = steamRequests.getFreeGames();
             if (gameListOptional.isEmpty())
@@ -67,18 +67,18 @@ public class SteamScraper extends GameScraper {
             Optional<JsonNode> itemListNodeOptional = steamRequests.getItems(jsonIdList);
 
             // Make sure data was returned, if not return empty list
-            if (itemListNodeOptional.isEmpty()) return List.of();
+            if (itemListNodeOptional.isEmpty()) return Set.of();
 
             JsonNode itemListNode = itemListNodeOptional.get();
 
-            List<ScraperResult> results = new ArrayList<>();
-            // Convert each itemNode to ScraperResult and add to results list
+            Set<ScraperResult> scraperResultSet = new HashSet<>();
+            // Convert each itemNode to ScraperResult and add to scraperResultSet list
             itemListNode.forEach(itemNode -> {
                 ScraperResult scraperResult = convertItemNodeToScrapperResult(itemNode);
-                if (scraperResult != null) results.add(scraperResult);
+                if (scraperResult != null) scraperResultSet.add(scraperResult);
             });
 
-            return results;
+            return scraperResultSet;
         } catch (IOException ex) {
             throw new GameRetrievalException("Unable to retrieve games from Steam", ex);
         }
@@ -178,7 +178,6 @@ public class SteamScraper extends GameScraper {
 
         // Pull out active_discounts node
         JsonNode activeDiscounts = bestPurchaseOption.get("active_discounts");
-
         if (activeDiscounts == null) return GameFinderConstants.NO_EXPIRATION_EPOCH;
 
         // Validate there is a price

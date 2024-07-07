@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -90,11 +89,7 @@ class GameFinderTest {
         expectedGames.addAll(expectedSteamResults);
 
         List<Game> actualGames = gameFinder.retrieveGames();
-
-        // Using this instead of assertEquals on the lists,
-        // allows the returned list order to not be considered in the equality check
-        assertEquals(expectedGames.size(), actualGames.size());
-        assertTrue(expectedGames.containsAll(actualGames));
+        TestHelper.assertCollectionEquals(expectedGames, actualGames);
     }
 
     @Test
@@ -106,15 +101,16 @@ class GameFinderTest {
         expectedGames.addAll(expectedSteamResults);
 
         List<Game> actualGames = new ArrayList<>();
+        List<Throwable> errors = new ArrayList<>();
 
-        gameFinder.retrieveGamesAsync(actualGames::addAll);
+        gameFinder.retrieveGamesAsync(actualGames::addAll, errors::add);
 
         // Wait for retrieveGamesAsync to finish executing
         CONFIG.getExecutorService().awaitTermination(30, TimeUnit.SECONDS);
 
+        assertTrue(errors.isEmpty());
         // Confirm that the actualGames list is equal to expectGames (excluding order)
-        assertEquals(expectedGames.size(), actualGames.size());
-        assertTrue(expectedGames.containsAll(actualGames));
+        TestHelper.assertCollectionEquals(expectedGames, actualGames);
 
     }
 

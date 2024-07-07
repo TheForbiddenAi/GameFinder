@@ -3,6 +3,7 @@ package me.theforbiddenai.gamefinder.scraper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
+import me.theforbiddenai.gamefinder.TestHelper;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
@@ -16,12 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -41,28 +40,12 @@ class GOGScraperTest {
         JsonNode catalogNode = mapper.readTree(GOGScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-catalog-data.json"));
 
         // Inject return values into objectMapper map on readTree call
-        ObjectMapper mockObjectMapper = mock(ObjectMapper.class, answer -> {
-            // Make sure the method being called is readTree, if not do not inject return values
-            if (!answer.getMethod().getName().equals("readTree")) return answer.callRealMethod();
 
-            // Ensure the argument passed is a URL object
-            Object arg = answer.getArgument(0);
-            if (!(arg instanceof URL url)) return answer.callRealMethod();
-
-            // Return the correct value depending on the URL path
-            switch (url.getPath()) {
-                case "/v1/pages/2f" -> {
-                    return homePageSectionsNode;
-                }
-                case "/v1/pages/2f/sections/2" -> {
-                    return giveawaySectionsNode;
-                }
-                case "/v1/catalog" -> {
-                    return catalogNode;
-                }
-            }
-
-            return answer.callRealMethod();
+        ObjectMapper mockObjectMapper = TestHelper.createMockObjectMapper(urlPath -> switch (urlPath) {
+            case "/v1/pages/2f" -> homePageSectionsNode;
+            case "/v1/pages/2f/sections/2" -> giveawaySectionsNode;
+            case "/v1/catalog" -> catalogNode;
+            default -> null;
         });
 
         // Inject return values into mockWebScraper map on modifyGameAttributes call
@@ -126,7 +109,7 @@ class GOGScraperTest {
                 .map(CompletableFuture::join)
                 .toList();
 
-        assertIterableEquals(expectedGamesList, actualGames);
+        TestHelper.assertCollectionEquals(expectedGamesList, actualGames);
     }
 
     @Test
@@ -138,7 +121,7 @@ class GOGScraperTest {
                 .map(CompletableFuture::join)
                 .toList();
 
-        assertIterableEquals(expectedGamesWithoutDLCsList, actualGames);
+        TestHelper.assertCollectionEquals(expectedGamesWithoutDLCsList, actualGames);
     }
 
 }

@@ -1,23 +1,18 @@
 package me.theforbiddenai.gamefinder.webscraper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import me.theforbiddenai.gamefinder.TestHelper;
 import me.theforbiddenai.gamefinder.domain.Game;
-import okhttp3.Call;
 import okhttp3.OkHttpClient;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GOGWebScraperTest {
@@ -27,18 +22,8 @@ class GOGWebScraperTest {
 
     @BeforeAll
     void setupTests() throws IOException {
-        OkHttpClient mockHttpClient = mock(OkHttpClient.class);
+        OkHttpClient mockHttpClient = TestHelper.setupOkHttpMocks(GOGWebScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-game-page.html"));
         this.gogWebScraper = new GOGWebScraper(mockHttpClient, new ObjectMapper());
-
-        Call mockCall = mock(Call.class);
-        Response mockResponse = mock(Response.class);
-        ResponseBody mockBody = mock(ResponseBody.class);
-
-
-        when(mockHttpClient.newCall(Mockito.any())).thenReturn(mockCall);
-        when(mockCall.execute()).thenReturn(mockResponse);
-        when(mockResponse.body()).thenReturn(mockBody);
-        when(mockBody.byteStream()).thenReturn(GOGWebScraperTest.class.getResourceAsStream("/scraper/gog_data/gog-game-page.html"));
     }
 
     @BeforeEach

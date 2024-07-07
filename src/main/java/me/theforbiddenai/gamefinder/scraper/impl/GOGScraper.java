@@ -48,26 +48,26 @@ public class GOGScraper extends GameScraper {
      * {@inheritDoc}
      */
     @Override
-    public List<ScraperResult> retrieveResults() throws GameRetrievalException {
+    public Collection<ScraperResult> retrieveResults() throws GameRetrievalException {
         try {
             // Retrieve data
             Optional<JsonNode> gameListOptional = gogRequests.getGameList();
             Map<String, JsonNode> giveawayNodes = getGiveawayNodes();
 
             // Make sure there is data to process
-            if (gameListOptional.isEmpty() && giveawayNodes.isEmpty()) return List.of();
+            if (gameListOptional.isEmpty() && giveawayNodes.isEmpty()) return Set.of();
 
-            List<ScraperResult> results = new ArrayList<>();
+            Set<ScraperResult> scraperResultSet = new HashSet<>();
 
-            // Convert the values in giveaway nodes to ScraperResults and add the nonnull objects to the results list
+            // Convert the values in giveaway nodes to ScraperResults and add the nonnull objects to the scraperResultSet list
             giveawayNodes.values()
                     .stream()
                     .map(this::getResultFromJson)
                     .filter(Objects::nonNull)
-                    .forEach(results::add);
+                    .forEach(scraperResultSet::add);
 
-            // There are no more games to process, return results
-            if (gameListOptional.isEmpty()) return results;
+            // There are no more games to process, return scraperResultSet
+            if (gameListOptional.isEmpty()) return scraperResultSet;
 
             // Loop through gameList JsonNodes
             for (JsonNode gameNode : gameListOptional.get()) {
@@ -77,10 +77,10 @@ public class GOGScraper extends GameScraper {
 
                 // Convert the gameNode to a ScraperResult and add it to the list if it isn't null
                 ScraperResult scraperResult = getResultFromJson(gameNode);
-                if (scraperResult != null) results.add(scraperResult);
+                if (scraperResult != null) scraperResultSet.add(scraperResult);
             }
 
-            return results;
+            return scraperResultSet;
         } catch (IOException ex) {
             throw new GameRetrievalException("Unable to retrieve games from GOG", ex);
         }

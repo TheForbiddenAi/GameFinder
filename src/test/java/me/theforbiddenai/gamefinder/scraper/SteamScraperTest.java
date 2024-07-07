@@ -3,6 +3,7 @@ package me.theforbiddenai.gamefinder.scraper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.theforbiddenai.gamefinder.GameFinderConfiguration;
+import me.theforbiddenai.gamefinder.TestHelper;
 import me.theforbiddenai.gamefinder.domain.Game;
 import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
@@ -14,12 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.IOException;
-import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SteamScraperTest {
@@ -36,26 +34,11 @@ class SteamScraperTest {
         JsonNode listTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-games-list-test-data.json"));
         JsonNode itemTreeNode = mapper.readTree(SteamScraperTest.class.getResourceAsStream("/scraper/steam_data/steam-getitems-test-data.json"));
 
-        // Inject return values into objectMapper map on readTree call
-        ObjectMapper mockObjectMapper = mock(ObjectMapper.class, answer -> {
-            // Make sure the method being called is readTree, if not do not inject return values
-            if (!answer.getMethod().getName().equals("readTree")) return answer.callRealMethod();
 
-            // Ensure the argument passed is a URL object
-            Object arg = answer.getArgument(0);
-            if (!(arg instanceof URL url)) return answer.callRealMethod();
-
-            // Return the correct value depending on the URL path
-            switch (url.getPath()) {
-                case "/search/results/" -> {
-                    return listTreeNode;
-                }
-                case "/IStoreBrowseService/GetItems/v1" -> {
-                    return itemTreeNode;
-                }
-            }
-
-            return answer.callRealMethod();
+        ObjectMapper mockObjectMapper = TestHelper.createMockObjectMapper(urlPath -> switch (urlPath) {
+            case "/search/results/" -> listTreeNode;
+            case "/IStoreBrowseService/GetItems/v1" -> itemTreeNode;
+            default -> null;
         });
 
         this.steamScraper = new SteamScraper(mockObjectMapper);
@@ -131,8 +114,8 @@ class SteamScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(true);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(true);
 
-        List<ScraperResult> returnedGames = steamScraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithDLCsList, returnedGames);
+        Collection<ScraperResult> returnedGames = steamScraper.retrieveResults();
+        TestHelper.assertCollectionEquals(expectedGamesWithDLCsList, returnedGames);
     }
 
     @Test
@@ -140,8 +123,8 @@ class SteamScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(false);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(true);
 
-        List<ScraperResult> returnedGames = steamScraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithoutDLCsList, returnedGames);
+        Collection<ScraperResult> returnedGames = steamScraper.retrieveResults();
+        TestHelper.assertCollectionEquals(expectedGamesWithoutDLCsList, returnedGames);
     }
 
     @Test
@@ -149,8 +132,8 @@ class SteamScraperTest {
         GameFinderConfiguration.getInstance().includeDLCs(true);
         GameFinderConfiguration.getInstance().allowSteamMatureContentScreenshots(false);
 
-        List<ScraperResult> returnedGames = steamScraper.retrieveResults();
-        assertIterableEquals(expectedGamesWithoutMatureContentList, returnedGames);
+        Collection<ScraperResult> returnedGames = steamScraper.retrieveResults();
+        TestHelper.assertCollectionEquals(expectedGamesWithoutMatureContentList, returnedGames);
     }
 
 }

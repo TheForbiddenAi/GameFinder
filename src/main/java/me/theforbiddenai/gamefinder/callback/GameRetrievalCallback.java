@@ -2,14 +2,14 @@ package me.theforbiddenai.gamefinder.callback;
 
 import me.theforbiddenai.gamefinder.domain.Game;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
- * This interface is used to define the callback method signature that is called
- * when GameFinder#retrieveGamesAsync(GameRetrievalCallback) is called
+ * This interface is used to define the game callback method signature that is called
+ * when {@code GameFinder#retrieveGamesAsync(GameRetrievalCallback, GameRetrievalErrorCallback)} is called
  */
 public interface GameRetrievalCallback {
 
-    void retrieveGame(List<Game> games);
+    void retrieveGame(Collection<Game> games);
 
 }

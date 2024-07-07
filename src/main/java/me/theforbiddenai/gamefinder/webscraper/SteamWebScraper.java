@@ -75,7 +75,7 @@ public class SteamWebScraper extends WebScraper<Long> {
 
             // Parse expirationDate using GameFinderConstants.STEAM_DATE_FORMAT to get epochSecond
             return LocalDateTime.parse(expirationDate, STEAM_DATE_FORMAT)
-                    // By default, Steam will give a date in PST
+                    // By default, Steam will give a date in PST/PDT
                     .atZone(ZoneId.of("America/Los_Angeles"))
                     .toInstant()
                     .getEpochSecond();
@@ -90,6 +90,15 @@ public class SteamWebScraper extends WebScraper<Long> {
      */
     @Override
     protected String getLocaleCookie() {
+        /*
+        timezoneOffset=(UTC offset in seconds),0
+        i.e. America/New_York would be timezoneOffset=-14400,0
+
+        I choose not to use this because Valve defaults to PST/PDT,
+        and the timezone only has to be known to process it.
+
+        Setting this cookie would add unnecessary complexity
+         */
         return null;
     }
 }

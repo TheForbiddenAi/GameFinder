@@ -7,8 +7,7 @@ import me.theforbiddenai.gamefinder.domain.Platform;
 import me.theforbiddenai.gamefinder.domain.ScraperResult;
 import me.theforbiddenai.gamefinder.exception.GameRetrievalException;
 
-import java.util.List;
-
+import java.util.Collection;
 
 /**
  * Defines common functionality and abstract methods for classes that retrieve free games from a service
@@ -31,9 +30,9 @@ public abstract class GameScraper {
     /**
      * Retrieves 100% off games/DLCs (depending on configuration) from a platform
      *
-     * @return A list of 100% off games/DLCs
+     * @return A collection of 100% off games/DLCs
      * @throws GameRetrievalException If the mapper is unable to parse the JSON data
      */
-    public abstract List<ScraperResult> retrieveResults() throws GameRetrievalException;
+    public abstract Collection<ScraperResult> retrieveResults() throws GameRetrievalException;
 
 }

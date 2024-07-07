@@ -19,12 +19,13 @@ The above lines will enable all platforms. To retrieve games, there are two opti
 The first way (and the recommended way) is to call the `retrieveGamesAsync` method.
 As the name implies, this will retrieve games asynchronously.
 ```java
-gameFinder.retrieveGamesAsync((gameList) -> System.out.println(gameList));
+gameFinder.retrieveGamesAsync(gameCollection -> System.out.println(gameCollection), throwable -> System.err.println(throwable));
 ```
-This method takes in a callback that returns a list of Game objects.
+This method takes in two callbacks: A GameRetrievalCallback and a GameRetrievalErrorCallback.
+The GameRetrievalErrorCallback is called each time an error is thrown
 
-NOTE: The callback will be called one time for each platform. 
-  * This means that each list will contain games from only ONE platform.
+<ins>NOTE</ins>: The GameRetrievalCallback will be called one time for each platform. 
+  * This means that each collection will contain games from only ONE platform.
 
 The second way to retrieve games is to call the `retrieveGames` method.
 This will retrieve games synchronously and return a list containing ALL found games.
@@ -109,10 +110,5 @@ Wherever possible, I try to use publicly accessible APIs provided by each platfo
   4. Miscellaneous `storeMedia` and `media` entries
 
 So much information is web-scraped from GOG because GOG embeds a JSON object inside the HTML of each game listing containing all the necessary data.
-This data is otherwise spread across several API endpoints, except for the expiration end time. Furthermore, the price endpoint is historically unreliable and returns blatantly incorrect information on occasion.
-
-## Known Limitations
-1. As part of EpicGames' free game promotions, occasionally a listing for a DLC is created for the sole purpose of this promotion that is deleted once the promotion is over. If the listing is not marked as on sale, GameFinder will NOT find them.
-   * <ins>Solution</ins> (Not implemented yet): Use the freeGamesPromotions in combination with the GraphQL API
-      * This is a rare issue and most likely will not be fixed.
-      * The reason I use the GraphQL API over the freeGamesPromotions is that games can be 100% off and not be part of Epic's free games promotions
+This data is otherwise spread across several API endpoints, except for the expiration end time (which is only available from the game listing). 
+Furthermore, the price endpoint is historically unreliable and returns blatantly incorrect information on occasion.
