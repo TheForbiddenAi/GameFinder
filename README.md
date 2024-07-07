@@ -1,6 +1,27 @@
 # GameFinder
 A Java library that finds 100% off games from Steam, EpicGames, and GOG.
 
+## Dependency
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.theforbiddenai/GameFinder)](https://central.sonatype.com/artifact/io.github.theforbiddenai/GameFinder/overview)
+
+### Maven
+```xml
+<dependency>
+    <groupId>io.github.theforbiddenai</groupId>
+    <artifactId>GameFinder</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+### Gradle
+```groovy
+implementation 'io.github.theforbiddenai:GameFinder:1.0.0'
+```
+
+### Non-Maven
+If you are unable to resolve dependencies from Maven repositories, the GameFinder's jar can be downloaded from
+the [Central Maven Repository](https://repo1.maven.org/maven2/io/github/theforbiddenai/GameFinder/).
+
 ## Usage
 First, create an instance of the `GameFinder` class:
 ```java
